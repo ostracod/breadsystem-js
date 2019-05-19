@@ -8,6 +8,9 @@ var bootAppsPath = ":bootApps";
 var argumentAmountMap = {};
 argumentAmountMap[0x0900] = 3; // add
 
+var dataTypeSizeMap = {};
+dataTypeSizeMap[1] = 1; // U8
+
 var runningAgentList = [];
 
 function joinPath(tail, head) {
@@ -71,10 +74,39 @@ function createReadIntFunction(elementSize) {
     }
 }
 
+function createWriteIntFunction(elementSize) {
+    var writeSize;
+    if (elementSize > 6) {
+        writeSize = 6;
+    } else {
+        writeSize = elementSize;
+    }
+    return function(buffer, offset, value) {
+        return buffer.writeUIntLE(value, offset, writeSize);
+    }
+}
+
 var readU8 = createReadIntFunction(1);
 var readU16 = createReadIntFunction(2);
 var readU32 = createReadIntFunction(4);
 var readU64 = createReadIntFunction(8);
+
+var writeU8 = createWriteIntFunction(1);
+var writeU16 = createWriteIntFunction(2);
+var writeU32 = createWriteIntFunction(4);
+var writeU64 = createWriteIntFunction(8);
+
+function readWithDataType(alphaRegion, betaRegion, index, dataType) {
+    if (dataType == 1) {
+        return readU8(betaRegion, index);
+    }
+}
+
+function writeWithDataType(alphaRegion, betaRegion, index, value, dataType) {
+    if (dataType == 1) {
+        return writeU8(betaRegion, index, value);
+    }
+}
 
 function Region(buffer, type, offset, size) {
     this.buffer = buffer;
@@ -103,8 +135,16 @@ function parseBytecodeFileRegionList(buffer, offset) {
     return output;
 }
 
+function FrameLength(alphaLength, betaLength) {
+    this.alphaLength = alphaLength;
+    this.betaLength = betaLength;
+}
+
 function parseFrameLength(buffer, offset) {
-    return [readU64(buffer, offset), readU64(buffer, offset + 8)];
+    return new FrameLength(
+        readU64(buffer, offset),
+        readU64(buffer, offset + 8)
+    );
 }
 
 function EntryPointFunction(region) {
@@ -150,27 +190,53 @@ BytecodeFile.prototype.parseFunctionsRegion = function(region) {
     }
 }
 
+function Frame(frameLength) {
+    this.alphaRegion = [];
+    while (this.alphaRegion.length < frameLength.alphaLength) {
+        this.alphaRegion.push(null);
+    }
+    this.betaRegion = Buffer.alloc(frameLength.betaLength);
+}
+
+Frame.prototype.readWithDataType = function(offset, dataType) {
+    return readWithDataType(
+        this.alphaRegion,
+        this.betaRegion,
+        offset,
+        dataType
+    );
+}
+
+Frame.prototype.writeWithDataType = function(offset, value, dataType) {
+    writeWithDataType(
+        this.alphaRegion,
+        this.betaRegion,
+        offset,
+        value,
+        dataType
+    );
+}
+
 function ConstantArgument(value) {
     this.value = value;
 }
 
-ConstantArgument.prototype.read = function() {
+ConstantArgument.prototype.readValue = function() {
     return this.value;
 }
 
-function GlobalFrameArgument(dataType, index) {
-    this.dataType = dataType;
+function FrameArgument(frame, index, dataType) {
+    this.frame = frame;
     this.index = index;
+    this.dataType = dataType;
 }
 
-GlobalFrameArgument.prototype.read = function() {
-    // TODO: Implement.
-    
+FrameArgument.prototype.readValue = function() {
+    return this.frame.readWithDataType(this.index, this.dataType);
 }
 
-GlobalFrameArgument.prototype.write = function(value) {
-    // TODO: Implement.
-    
+FrameArgument.prototype.writeValue = function(value) {
+    this.frame.writeWithDataType(this.index, value, this.dataType);
 }
 
 function Agent(appPath) {
@@ -179,8 +245,8 @@ function Agent(appPath) {
     // Offset within the instruction array.
     this.instructionOffset = 0;
     this.currentFunction = this.bytecodeFile.entryPointFunction;
+    this.globalFrame = new Frame(this.currentFunction.frameLength);
 }
-
 
 Agent.prototype.parseInstructionArgument = function() {
     var bytecodeBuffer = this.currentFunction.buffer;
@@ -192,17 +258,15 @@ Agent.prototype.parseInstructionArgument = function() {
     // Constant value.
     if (referenceType == 0) {
         var tempValue;
-        if (dataType == 1) {
-            tempValue = readU8(bytecodeBuffer, baseOffset + this.instructionOffset);
-            this.instructionOffset += 1;
-        }
+        tempValue = readWithDataType(null, bytecodeBuffer, baseOffset + this.instructionOffset, dataType);
+        this.instructionOffset += dataTypeSizeMap[dataType];
         return new ConstantArgument(tempValue);
     }
     // Global frame.
     if (referenceType == 1) {
         var tempIndexArgument = this.parseInstructionArgument();
-        var frameIndex = tempIndexArgument.read();
-        return new GlobalFrameArgument(dataType, frameIndex);
+        var frameIndex = tempIndexArgument.readValue();
+        return new FrameArgument(this.globalFrame, frameIndex, dataType);
     }
     return null;
 }
@@ -228,9 +292,9 @@ Agent.prototype.performNextInstruction = function() {
         argumentList.push(tempArgument);
     }
     if (opcode == 0x0900) {
-        // TODO: Perform the instruction.
-        console.log(argumentList);
-        
+        var tempValue1 = argumentList[1].readValue();
+        var tempValue2 = argumentList[2].readValue();
+        argumentList[0].writeValue(tempValue1 + tempValue2);
     }
 }
 
