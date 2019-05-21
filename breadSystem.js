@@ -147,12 +147,119 @@ function parseFrameLength(buffer, offset) {
     );
 }
 
-function EntryPointFunction(region) {
-    this.buffer = region.buffer;
-    this.frameLength = parseFrameLength(region.buffer, region.offset);
-    this.instructionArraySize = readU64(region.buffer, region.offset + 16);
-    this.instructionArrayOffset = region.offset + 24;
+function InstructionArgument() {
+    // Do nothing.
 }
+
+InstructionArgument.prototype.readValue = function(agent) {
+    throw new Error("Not implemented!");
+}
+
+InstructionArgument.prototype.writeValue = function(agent, value) {
+    throw new Error("Not implemented!");
+}
+
+function ConstantArgument(value) {
+    this.value = value;
+}
+
+ConstantArgument.prototype = Object.create(InstructionArgument.prototype);
+
+ConstantArgument.prototype.readValue = function(agent) {
+    return this.value;
+}
+
+function GlobalFrameArgument(indexArgument, dataType) {
+    this.indexArgument = indexArgument;
+    this.dataType = dataType;
+}
+
+GlobalFrameArgument.prototype = Object.create(InstructionArgument.prototype);
+
+GlobalFrameArgument.prototype.readIndex = function(agent) {
+    return this.indexArgument.readValue(agent);
+}
+
+GlobalFrameArgument.prototype.readValue = function(agent) {
+    var index = this.readIndex(agent);
+    return agent.globalFrame.readWithDataType(index, this.dataType);
+}
+
+GlobalFrameArgument.prototype.writeValue = function(agent, value) {
+    var index = this.readIndex(agent);
+    agent.globalFrame.writeWithDataType(index, value, this.dataType);
+}
+
+function Instruction(opcode, argumentList) {
+    this.opcode = opcode;
+    this.argumentList = argumentList;
+}
+
+function BytecodeFunction(
+    buffer,
+    frameLength,
+    instructionArrayOffset,
+    instructionArraySize
+) {
+    this.buffer = buffer;
+    this.frameLength = frameLength;
+    this.instructionArrayOffset = instructionArrayOffset;
+    this.instructionArraySize = instructionArraySize;
+    this.parseOffset = this.instructionArrayOffset;
+    this.parseEndOffset = this.instructionArrayOffset + this.instructionArraySize;
+    this.instructionList = [];
+    while (this.parseOffset < this.parseEndOffset) {
+        var tempInstruction = this.parseNextInstruction();
+        this.instructionList.push(tempInstruction);
+    }
+}
+
+BytecodeFunction.prototype.parseInstructionArgument = function() {
+    var prefix = readU8(this.buffer, this.parseOffset);
+    this.parseOffset += 1;
+    var referenceType = (prefix & 0xF0) >> 4;
+    var dataType = prefix & 0x0F;
+    // Constant value.
+    if (referenceType == 0) {
+        var tempValue;
+        tempValue = readWithDataType(null, this.buffer, this.parseOffset, dataType);
+        this.parseOffset += dataTypeSizeMap[dataType];
+        return new ConstantArgument(tempValue);
+    }
+    // Global frame.
+    if (referenceType == 1) {
+        var tempIndexArgument = this.parseInstructionArgument();
+        return new GlobalFrameArgument(tempIndexArgument, dataType);
+    }
+    return null;
+}
+
+BytecodeFunction.prototype.parseNextInstruction = function() {
+    var opcode = readU16(this.buffer, this.parseOffset);
+    this.parseOffset += 2;
+    var argumentAmount = argumentAmountMap[opcode];
+    if (typeof argumentAmount === "undefined") {
+        throw new Error("Unrecognized opcode! (" + opcode + ")");
+    }
+    var argumentList = [];
+    while (argumentList.length < argumentAmount) {
+        var tempArgument = this.parseInstructionArgument();
+        argumentList.push(tempArgument);
+    }
+    return new Instruction(opcode, argumentList);
+}
+
+function EntryPointFunction(region) {
+    BytecodeFunction.call(
+        this,
+        region.buffer,
+        parseFrameLength(region.buffer, region.offset),
+        region.offset + 24,
+        readU64(region.buffer, region.offset + 16)
+    );
+}
+
+EntryPointFunction.prototype = Object.create(BytecodeFunction.prototype);
 
 function BytecodeFile(path) {
     this.path = path;
@@ -217,84 +324,38 @@ Frame.prototype.writeWithDataType = function(offset, value, dataType) {
     );
 }
 
-function ConstantArgument(value) {
-    this.value = value;
-}
-
-ConstantArgument.prototype.readValue = function() {
-    return this.value;
-}
-
-function FrameArgument(frame, index, dataType) {
-    this.frame = frame;
-    this.index = index;
-    this.dataType = dataType;
-}
-
-FrameArgument.prototype.readValue = function() {
-    return this.frame.readWithDataType(this.index, this.dataType);
-}
-
-FrameArgument.prototype.writeValue = function(value) {
-    this.frame.writeWithDataType(this.index, value, this.dataType);
-}
-
 function Agent(appPath) {
     this.bytecodeFile = new BytecodeFile(appPath);
     runningAgentList.push(this);
-    // Offset within the instruction array.
-    this.instructionOffset = 0;
+    this.instructionIndex = 0;
     this.currentFunction = this.bytecodeFile.entryPointFunction;
     this.globalFrame = new Frame(this.currentFunction.frameLength);
+    this.currentInstruction = null;
 }
 
-Agent.prototype.parseInstructionArgument = function() {
-    var bytecodeBuffer = this.currentFunction.buffer;
-    var baseOffset = this.currentFunction.instructionArrayOffset;
-    var prefix = readU8(bytecodeBuffer, baseOffset + this.instructionOffset);
-    this.instructionOffset += 1;
-    var referenceType = (prefix & 0xF0) >> 4;
-    var dataType = prefix & 0x0F;
-    // Constant value.
-    if (referenceType == 0) {
-        var tempValue;
-        tempValue = readWithDataType(null, bytecodeBuffer, baseOffset + this.instructionOffset, dataType);
-        this.instructionOffset += dataTypeSizeMap[dataType];
-        return new ConstantArgument(tempValue);
-    }
-    // Global frame.
-    if (referenceType == 1) {
-        var tempIndexArgument = this.parseInstructionArgument();
-        var frameIndex = tempIndexArgument.readValue();
-        return new FrameArgument(this.globalFrame, frameIndex, dataType);
-    }
-    return null;
+Agent.prototype.readArgument = function(index) {
+    var tempArgument = this.currentInstruction.argumentList[index];
+    return tempArgument.readValue(this);
+}
+
+Agent.prototype.writeArgument = function(index, value) {
+    var tempArgument = this.currentInstruction.argumentList[index];
+    tempArgument.writeValue(this, value);
 }
 
 Agent.prototype.performNextInstruction = function() {
-    if (this.instructionOffset >= this.currentFunction.instructionArraySize) {
+    var tempInstructionList = this.currentFunction.instructionList;
+    if (this.instructionIndex >= tempInstructionList.length) {
         this.terminate();
         return;
     }
-    var bytecodeBuffer = this.currentFunction.buffer;
-    var baseOffset = this.currentFunction.instructionArrayOffset;
-    var opcode = readU16(bytecodeBuffer, baseOffset + this.instructionOffset);
-    this.instructionOffset += 2;
-    var argumentAmount = argumentAmountMap[opcode];
-    if (typeof argumentAmount === "undefined") {
-        console.log("ERROR: Unrecognized opcode! (" + opcode + ")");
-        this.terminate();
-        return;
-    }
-    var argumentList = [];
-    while (argumentList.length < argumentAmount) {
-        var tempArgument = this.parseInstructionArgument();
-        argumentList.push(tempArgument);
-    }
+    this.currentInstruction = tempInstructionList[this.instructionIndex];
+    this.instructionIndex += 1;
+    var opcode = this.currentInstruction.opcode;
     if (opcode == 0x0900) {
-        var tempValue1 = argumentList[1].readValue();
-        var tempValue2 = argumentList[2].readValue();
-        argumentList[0].writeValue(tempValue1 + tempValue2);
+        var tempValue1 = this.readArgument(1);
+        var tempValue2 = this.readArgument(2);
+        this.writeArgument(0, tempValue1 + tempValue2);
     }
 }
 
