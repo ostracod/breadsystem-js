@@ -5,9 +5,6 @@ var pathUtils = require("path");
 var primaryVolumeNativePath = "./primaryVolume";
 var bootAppsPath = ":bootApps";
 
-var argumentAmountMap = {};
-argumentAmountMap[0x0900] = 3; // add
-
 var dataTypeSizeMap = {};
 dataTypeSizeMap[1] = 1; // U8
 
@@ -237,10 +234,8 @@ BytecodeFunction.prototype.parseInstructionArgument = function() {
 BytecodeFunction.prototype.parseNextInstruction = function() {
     var opcode = readU16(this.buffer, this.parseOffset);
     this.parseOffset += 2;
-    var argumentAmount = argumentAmountMap[opcode];
-    if (typeof argumentAmount === "undefined") {
-        throw new Error("Unrecognized opcode! (" + opcode + ")");
-    }
+    var argumentAmount = readU8(this.buffer, this.parseOffset);
+    this.parseOffset += 1;
     var argumentList = [];
     while (argumentList.length < argumentAmount) {
         var tempArgument = this.parseInstructionArgument();
@@ -357,6 +352,7 @@ Agent.prototype.performNextInstruction = function() {
         var tempValue2 = this.readArgument(2);
         this.writeArgument(0, tempValue1 + tempValue2);
     }
+    // TODO: Throw an error for unrecognized opcodes.
 }
 
 Agent.prototype.terminate = function() {

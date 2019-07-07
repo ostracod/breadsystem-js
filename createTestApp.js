@@ -104,6 +104,8 @@ function assembleRegionList(fileOffset, regionList) {
 instructionArray = [];
 // Instruction opcode. (0x0900 = add)
 addU16(instructionArray, 0x0900);
+// Number of arguments.
+addU8(instructionArray, 3);
 // Destination. (beta region of global frame)
 addU8(instructionArray, [0x11, 0x01, 0x00]);
 // First operand. (constant)
