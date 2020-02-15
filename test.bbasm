@@ -1,0 +1,11 @@
+
+BYTECODE_VER 1.0.0
+
+VER_DEP initableIface, ":system/ifaces/initable", 1.0.0, implemented
+
+PUB_FUNC init, initableIface
+    VAR data, u8
+    wrt data, 5
+END
+
+
