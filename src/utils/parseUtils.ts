@@ -1,12 +1,13 @@
 
+import {bufferUtils} from "utils/bufferUtils";
 import {FrameLength} from "objects/allocation";
 
 class ParseUtils {
     
     parseFrameLength(buffer: Buffer, offset: number): FrameLength {
         return new FrameLength(
-            buffer.readUInt32LE(offset),
-            buffer.readUInt32LE(offset + 8)
+            bufferUtils.readUInt(buffer, 0, 8),
+            bufferUtils.readUInt(buffer, 8, 8),
         );
     }
 }
