@@ -1,5 +1,6 @@
 
 import {niceUtils} from "utils/niceUtils";
+import {RuntimeError} from "objects/runtimeError";
 
 class BufferUtils {
     
@@ -39,7 +40,7 @@ class BufferUtils {
         } else if (byteAmount === 8) {
             return buffer.readBigUInt64LE(offset);
         } else {
-            throw new RangeError("Unsupported byte amount.");
+            throw new RuntimeError("Unsupported byte amount.");
         }
     }
     
@@ -49,7 +50,7 @@ class BufferUtils {
         } else if (byteAmount === 8) {
             buffer.writeBigUInt64LE(value, offset);
         } else {
-            throw new RangeError("Unsupported byte amount.");
+            throw new RuntimeError("Unsupported byte amount.");
         }
     }
     
@@ -59,7 +60,7 @@ class BufferUtils {
         } else if (byteAmount === 8) {
             return buffer.readBigInt64LE(offset);
         } else {
-            throw new RangeError("Unsupported byte amount.");
+            throw new RuntimeError("Unsupported byte amount.");
         }
     }
     
@@ -69,7 +70,7 @@ class BufferUtils {
         } else if (byteAmount === 8) {
             buffer.writeBigInt64LE(value, offset);
         } else {
-            throw new RangeError("Unsupported byte amount.");
+            throw new RuntimeError("Unsupported byte amount.");
         }
     }
     

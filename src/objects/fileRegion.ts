@@ -2,6 +2,10 @@
 import {niceUtils} from "utils/niceUtils";
 import {bufferUtils} from "utils/bufferUtils";
 
+import {RuntimeError} from "objects/runtimeError";
+import {FrameLength} from "objects/allocation";
+import {FunctionDefinition, PrivateFunctionDefinition, PublicFunctionDefinition, GuardFunctionDefinition} from "objects/functionDefinition";
+
 export const REGION_TYPE = {
     
     // Atomic region types.
@@ -64,6 +68,14 @@ export abstract class FileRegion {
     }
     
     abstract getDisplayStringHelper(indentationLevel: number): string[];
+    
+    createFunctionDefinition(): FunctionDefinition {
+        throw new RuntimeError("Expected function region.");
+    }
+    
+    createFrameLength(): FrameLength {
+        throw new RuntimeError("Expected frame length region.");
+    }
 }
 
 export class AtomicFileRegion extends FileRegion {
@@ -92,6 +104,16 @@ export class AtomicFileRegion extends FileRegion {
         }
         return output;
     }
+    
+    createFrameLength(): FrameLength {
+        if (this.contentBuffer.length !== 16) {
+            throw new RuntimeError("Frame length buffer has incorrect size.");
+        }
+        return new FrameLength(
+            bufferUtils.readUInt(this.contentBuffer, 0, 8),
+            bufferUtils.readUInt(this.contentBuffer, 8, 8),
+        );
+    }
 }
 
 export class CompositeFileRegion extends FileRegion {
@@ -105,6 +127,44 @@ export class CompositeFileRegion extends FileRegion {
     
     getDisplayStringHelper(indentationLevel: number): string[] {
         return this.regionList.map(region => region.getDisplayString(indentationLevel));
+    }
+    
+    getRegionsByType(regionType: number): FileRegion[] {
+        return this.regionList.filter(region => region.regionType === regionType);
+    }
+    
+    getRegionOrNullByType(regionType: number): FileRegion {
+        let tempResult = this.getRegionsByType(regionType);
+        if (tempResult.length > 1) {
+            let tempName = regionTypeNameMap[regionType];
+            throw new RuntimeError(`Found duplicate ${tempName} region.`);
+        }
+        if (tempResult.length < 1) {
+            return null;
+        } else {
+            return tempResult[0];
+        }
+    }
+    
+    getRegionByType(regionType: number): FileRegion {
+        let output = this.getRegionOrNullByType(regionType);
+        if (output === null) {
+            let tempName = regionTypeNameMap[regionType];
+            throw new RuntimeError(`Expected ${tempName} region.`);
+        }
+        return output;
+    }
+    
+    createFunctionDefinition(): FunctionDefinition {
+        if (this.regionType === REGION_TYPE.privFunc) {
+            return new PrivateFunctionDefinition(this);
+        } else if (this.regionType === REGION_TYPE.pubFunc) {
+            return new PublicFunctionDefinition(this);
+        } else if (this.regionType === REGION_TYPE.guardFunc) {
+            return new GuardFunctionDefinition(this);
+        } else {
+            throw new RuntimeError("Expected function region.");
+        }
     }
 }
 

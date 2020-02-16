@@ -1,16 +1,10 @@
 
 import {bufferUtils} from "utils/bufferUtils";
-import {FrameLength} from "objects/allocation";
+
+import {RuntimeError} from "objects/runtimeError";
 import {FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
 
 class ParseUtils {
-    
-    parseFrameLength(buffer: Buffer, offset: number): FrameLength {
-        return new FrameLength(
-            bufferUtils.readUInt(buffer, 0, 8),
-            bufferUtils.readUInt(buffer, 8, 8),
-        );
-    }
     
     parseRegion(buffer: Buffer, offset: number): {region: FileRegion, offset: number} {
         let regionType = bufferUtils.readUInt(buffer, offset, 2);
@@ -25,7 +19,7 @@ class ParseUtils {
                 let tempResult = parseUtils.parseRegion(buffer, offset);
                 offset = tempResult.offset;
                 if (offset > endOffset) {
-                    throw new RangeError("Subregion is too large.");
+                    throw new RuntimeError("Subregion is too large.");
                 }
                 regionList.push(tempResult.region);
             }
