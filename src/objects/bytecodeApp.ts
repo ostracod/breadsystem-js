@@ -1,6 +1,9 @@
 
 import * as fs from "fs";
+
 import {pathUtils} from "utils/pathUtils";
+import {parseUtils} from "utils/parseUtils";
+
 import {FrameLength} from "objects/allocation";
 import {FunctionDefinition} from "objects/functionDefinition";
 
@@ -18,7 +21,10 @@ export class BytecodeApp {
         this.functionDefinitionList = [];
         this.initFunctionDefinition = null;
         this.globalFrameLength = new FrameLength(0, 0);
-        // TODO: Parse content.
+        let tempResult = parseUtils.parseRegion(content, 0);
+        let appFileRegion = tempResult.region;
+        // TODO: Consume the region.
+        console.log(appFileRegion.getDisplayString());
         
     }
 }

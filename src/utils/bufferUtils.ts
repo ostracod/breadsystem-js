@@ -1,4 +1,6 @@
 
+import {niceUtils} from "utils/niceUtils";
+
 class BufferUtils {
     
     readUInt(buffer: Buffer, offset: number, byteAmount: number): number {
@@ -69,6 +71,15 @@ class BufferUtils {
         } else {
             throw new RangeError("Unsupported byte amount.");
         }
+    }
+    
+    convertBufferToHexadecimal(buffer: Buffer): string {
+        let tempTextList = [];
+        for (let index = 0; index < buffer.length; index++) {
+            let tempValue = buffer[index];
+            tempTextList.push(niceUtils.convertNumberToHexadecimal(tempValue, 2));
+        }
+        return tempTextList.join(" ");
     }
 }
 
