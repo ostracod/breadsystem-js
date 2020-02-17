@@ -1,4 +1,6 @@
 
+import {Constant} from "objects/constant";
+
 export const INSTRUCTION_REF_PREFIX = {
     constant: 0,
     globalFrame: 1,
@@ -9,11 +11,21 @@ export const INSTRUCTION_REF_PREFIX = {
     heapAlloc: 6
 };
 
-// TODO: Create concrete subclasses of InstructionArg.
 export abstract class InstructionArg {
     
     constructor() {
+        // Do nothing.
         
+    }
+}
+
+export class ConstantInstructionArg extends InstructionArg {
+    
+    constant: Constant;
+    
+    constructor(constant: Constant) {
+        super();
+        this.constant = constant;
     }
 }
 

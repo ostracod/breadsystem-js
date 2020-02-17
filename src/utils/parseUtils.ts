@@ -1,11 +1,12 @@
 
 import {bufferUtils} from "utils/bufferUtils";
 
-import {dataTypeMap, BetaType} from "delegates/dataType";
+import {dataTypeMap, NumberType, PointerType} from "delegates/dataType";
 
 import {RuntimeError} from "objects/runtimeError";
 import {FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
-import {INSTRUCTION_REF_PREFIX, InstructionArg, Instruction} from "objects/instruction";
+import {INSTRUCTION_REF_PREFIX, InstructionArg, ConstantInstructionArg, Instruction} from "objects/instruction";
+import {NumberConstant} from "objects/constant";
 
 class ParseUtils {
     
@@ -47,22 +48,29 @@ class ParseUtils {
         let dataTypePrefix = argPrefix & 0x0F;
         let dataType = dataTypeMap[dataTypePrefix];
         let tempArg: InstructionArg;
-        // TODO: Populate tempArg with an actual value.
         if (refPrefix === INSTRUCTION_REF_PREFIX.constant) {
-            if (dataType instanceof BetaType) {
-                let betaType = dataType as BetaType;
-                offset += betaType.byteAmount;
+            if (dataType instanceof NumberType) {
+                let numberType = dataType as NumberType;
+                let tempValue = numberType.readNumber(buffer, offset);
+                offset += numberType.byteAmount;
+                let tempConstant = new NumberConstant(tempValue, numberType);
+                tempArg = new ConstantInstructionArg(tempConstant);
+            } else if (dataType instanceof PointerType) {
+                tempArg = new ConstantInstructionArg(null);
+            } else {
+                throw new RuntimeError("Invalid argument data type.");
             }
-            tempArg = null;
         } else if (refPrefix === INSTRUCTION_REF_PREFIX.heapAlloc) {
             let tempResult = parseUtils.parseInstructionArg(buffer, offset);
             offset = tempResult.offset;
             tempResult = parseUtils.parseInstructionArg(buffer, offset);
             offset = tempResult.offset;
+            // TODO: Populate tempArg with an actual value.
             tempArg = null;
         } else {
             let tempResult = parseUtils.parseInstructionArg(buffer, offset);
             offset = tempResult.offset;
+            // TODO: Populate tempArg with an actual value.
             tempArg = null;
         }
         return {

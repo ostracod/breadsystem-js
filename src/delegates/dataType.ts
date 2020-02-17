@@ -1,6 +1,7 @@
 
 import {MixedNumber} from "models/items";
 import {niceUtils} from "utils/niceUtils";
+import {bufferUtils} from "utils/bufferUtils";
 
 export var dataTypeMap: {[argPrefix: string]: DataType} = {};
 
@@ -70,6 +71,8 @@ export abstract class NumberType extends BetaType {
     
     abstract getNamePrefix(): string;
     abstract getByteAmountMergePriority(): number;
+    abstract readNumber(buffer: Buffer, offset: number): MixedNumber;
+    abstract writeNumber(buffer: Buffer, offset: number, value: MixedNumber): void;
 }
 
 export abstract class IntegerType extends NumberType {
@@ -125,6 +128,15 @@ export class UnsignedIntegerType extends IntegerType {
         }
         return (dataType instanceof UnsignedIntegerType);
     }
+    
+    readNumber(buffer: Buffer, offset: number): MixedNumber {
+        return bufferUtils.readBigUInt(buffer, offset, this.byteAmount);
+    }
+    
+    writeNumber(buffer: Buffer, offset: number, value: MixedNumber): void {
+        let tempValue = niceUtils.convertMixedNumberToBigInt(value);
+        bufferUtils.writeBigUInt(buffer, offset, tempValue, this.byteAmount);
+    }
 }
 
 export class SignedIntegerType extends IntegerType {
@@ -164,6 +176,15 @@ export class SignedIntegerType extends IntegerType {
         }
         return (dataType instanceof SignedIntegerType);
     }
+    
+    readNumber(buffer: Buffer, offset: number): MixedNumber {
+        return bufferUtils.readBigSInt(buffer, offset, this.byteAmount);
+    }
+    
+    writeNumber(buffer: Buffer, offset: number, value: MixedNumber): void {
+        let tempValue = niceUtils.convertMixedNumberToBigInt(value);
+        bufferUtils.writeBigSInt(buffer, offset, tempValue, this.byteAmount);
+    }
 }
 
 export class FloatType extends NumberType {
@@ -189,6 +210,15 @@ export class FloatType extends NumberType {
             return false;
         }
         return (dataType instanceof FloatType);
+    }
+    
+    readNumber(buffer: Buffer, offset: number): MixedNumber {
+        return bufferUtils.readFloat(buffer, offset, this.byteAmount);
+    }
+    
+    writeNumber(buffer: Buffer, offset: number, value: MixedNumber): void {
+        let tempValue = Number(value);
+        bufferUtils.writeFloat(buffer, offset, tempValue, this.byteAmount);
     }
 }
 

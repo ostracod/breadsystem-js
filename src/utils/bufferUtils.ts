@@ -74,6 +74,26 @@ class BufferUtils {
         }
     }
     
+    readFloat(buffer: Buffer, offset: number, byteAmount: number): number {
+        if (byteAmount === 4) {
+            return buffer.readFloatLE(offset);
+        } else if (byteAmount === 8) {
+            return buffer.readDoubleLE(offset);
+        } else {
+            throw new RuntimeError("Unsupported byte amount.");
+        }
+    }
+    
+    writeFloat(buffer: Buffer, offset: number, value: number, byteAmount: number): void {
+        if (byteAmount === 4) {
+            buffer.writeFloatLE(value, offset);
+        } else if (byteAmount === 8) {
+            buffer.writeDoubleLE(value, offset);
+        } else {
+            throw new RuntimeError("Unsupported byte amount.");
+        }
+    }
+    
     convertBufferToHexadecimal(buffer: Buffer): string {
         let tempTextList = [];
         for (let index = 0; index < buffer.length; index++) {
