@@ -13,8 +13,10 @@ export abstract class FunctionDefinition {
         this.fileRegion = fileRegion;
         let tempRegion = this.fileRegion.getRegionByType(REGION_TYPE.localFrameLen);
         this.localFrameLength = tempRegion.createFrameLength();
-        this.instructionList = [];
+        tempRegion = this.fileRegion.getRegionByType(REGION_TYPE.instrs);
+        this.instructionList = tempRegion.createInstructions();
         // TODO: Consume more regions.
+        console.log(this.instructionList);
         
     }
 }

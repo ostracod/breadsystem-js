@@ -1,6 +1,16 @@
 
+export const INSTRUCTION_REF_PREFIX = {
+    constant: 0,
+    globalFrame: 1,
+    localFrame: 2,
+    prevArgFrame: 3,
+    nextArgFrame: 4,
+    appData: 5,
+    heapAlloc: 6
+};
+
 // TODO: Create concrete subclasses of InstructionArg.
-abstract class InstructionArg {
+export abstract class InstructionArg {
     
     constructor() {
         

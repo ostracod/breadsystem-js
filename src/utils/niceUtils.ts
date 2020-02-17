@@ -1,4 +1,6 @@
 
+import {MixedNumber} from "models/items";
+
 class NiceUtils {
     
     getIndentation(indentationLevel: number): string {
@@ -24,6 +26,13 @@ class NiceUtils {
             output = "0" + output;
         }
         return "0x" + output;
+    }
+    
+    convertMixedNumberToBigInt(value: MixedNumber): bigint {
+        if (typeof value === "bigint") {
+            return value;
+        }
+        return BigInt(Math.floor(value));
     }
 }
 

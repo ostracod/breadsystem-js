@@ -1,10 +1,12 @@
 
 import {niceUtils} from "utils/niceUtils";
 import {bufferUtils} from "utils/bufferUtils";
+import {parseUtils} from "utils/parseUtils";
 
 import {RuntimeError} from "objects/runtimeError";
 import {FrameLength} from "objects/allocation";
 import {FunctionDefinition, PrivateFunctionDefinition, PublicFunctionDefinition, GuardFunctionDefinition} from "objects/functionDefinition";
+import {Instruction} from "objects/instruction";
 
 export const REGION_TYPE = {
     
@@ -76,6 +78,10 @@ export abstract class FileRegion {
     createFrameLength(): FrameLength {
         throw new RuntimeError("Expected frame length region.");
     }
+    
+    createInstructions(): Instruction[] {
+        throw new RuntimeError("Expected instructions region.");
+    }
 }
 
 export class AtomicFileRegion extends FileRegion {
@@ -113,6 +119,17 @@ export class AtomicFileRegion extends FileRegion {
             bufferUtils.readUInt(this.contentBuffer, 0, 8),
             bufferUtils.readUInt(this.contentBuffer, 8, 8),
         );
+    }
+    
+    createInstructions(): Instruction[] {
+        let output: Instruction[] = [];
+        let offset = 0;
+        while (offset < this.contentBuffer.length) {
+            let tempResult = parseUtils.parseInstruction(this.contentBuffer, offset);
+            output.push(tempResult.instruction);
+            offset = tempResult.offset;
+        }
+        return output;
     }
 }
 
