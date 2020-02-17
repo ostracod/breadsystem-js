@@ -1,15 +1,7 @@
 
+import {DataType} from "delegates/dataType";
 import {Constant} from "objects/constant";
-
-export const INSTRUCTION_REF_PREFIX = {
-    constant: 0,
-    globalFrame: 1,
-    localFrame: 2,
-    prevArgFrame: 3,
-    nextArgFrame: 4,
-    appData: 5,
-    heapAlloc: 6
-};
+import {InstructionRef} from "objects/instructionRef";
 
 export abstract class InstructionArg {
     
@@ -26,6 +18,24 @@ export class ConstantInstructionArg extends InstructionArg {
     constructor(constant: Constant) {
         super();
         this.constant = constant;
+    }
+}
+
+export class RefInstructionArg extends InstructionArg {
+    
+    instructionRef: InstructionRef;
+    dataType: DataType;
+    indexArg: InstructionArg
+    
+    constructor(
+        instructionRef: InstructionRef,
+        dataType: DataType,
+        indexArg: InstructionArg
+    ) {
+        super();
+        this.instructionRef = instructionRef;
+        this.dataType = dataType;
+        this.indexArg = indexArg;
     }
 }
 

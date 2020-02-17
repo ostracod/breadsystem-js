@@ -5,7 +5,8 @@ import {dataTypeMap, NumberType, PointerType} from "delegates/dataType";
 
 import {RuntimeError} from "objects/runtimeError";
 import {FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
-import {INSTRUCTION_REF_PREFIX, InstructionArg, ConstantInstructionArg, Instruction} from "objects/instruction";
+import {InstructionArg, ConstantInstructionArg, RefInstructionArg, Instruction} from "objects/instruction";
+import {simpleInstructionRefMap, InstructionRef, PointerInstructionRef} from "objects/instructionRef";
 import {NumberConstant} from "objects/constant";
 
 class ParseUtils {
@@ -48,7 +49,7 @@ class ParseUtils {
         let dataTypePrefix = argPrefix & 0x0F;
         let dataType = dataTypeMap[dataTypePrefix];
         let tempArg: InstructionArg;
-        if (refPrefix === INSTRUCTION_REF_PREFIX.constant) {
+        if (refPrefix === 0) {
             if (dataType instanceof NumberType) {
                 let numberType = dataType as NumberType;
                 let tempValue = numberType.readNumber(buffer, offset);
@@ -60,18 +61,26 @@ class ParseUtils {
             } else {
                 throw new RuntimeError("Invalid argument data type.");
             }
-        } else if (refPrefix === INSTRUCTION_REF_PREFIX.heapAlloc) {
-            let tempResult = parseUtils.parseInstructionArg(buffer, offset);
-            offset = tempResult.offset;
-            tempResult = parseUtils.parseInstructionArg(buffer, offset);
-            offset = tempResult.offset;
-            // TODO: Populate tempArg with an actual value.
-            tempArg = null;
         } else {
-            let tempResult = parseUtils.parseInstructionArg(buffer, offset);
-            offset = tempResult.offset;
-            // TODO: Populate tempArg with an actual value.
-            tempArg = null;
+            let tempRef: InstructionRef;
+            let tempIndexArg: InstructionArg;
+            if (refPrefix === 6) {
+                let tempResult = parseUtils.parseInstructionArg(buffer, offset);
+                let pointerArg = tempResult.arg;
+                offset = tempResult.offset;
+                tempResult = parseUtils.parseInstructionArg(buffer, offset);
+                tempIndexArg = tempResult.arg;
+                offset = tempResult.offset;
+                tempRef = new PointerInstructionRef(pointerArg);
+            } else if (refPrefix in simpleInstructionRefMap) {
+                let tempResult = parseUtils.parseInstructionArg(buffer, offset);
+                tempIndexArg = tempResult.arg;
+                offset = tempResult.offset;
+                tempRef = simpleInstructionRefMap[refPrefix];
+            } else {
+                throw new RuntimeError("Invalid instruction reference prefix.");
+            }
+            tempArg = new RefInstructionArg(tempRef, dataType, tempIndexArg);
         }
         return {
             arg: tempArg,
