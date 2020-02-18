@@ -7,6 +7,7 @@ import {RuntimeError} from "objects/runtimeError";
 import {FrameLength} from "objects/allocation";
 import {FunctionDefinition, PrivateFunctionDefinition, PublicFunctionDefinition, GuardFunctionDefinition} from "objects/functionDefinition";
 import {Instruction} from "objects/instruction";
+import {DependencyDefinition, PathDependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
 
 export const REGION_TYPE = {
     
@@ -82,6 +83,14 @@ export abstract class FileRegion {
     createInstructions(): Instruction[] {
         throw new RuntimeError("Expected instructions region.");
     }
+    
+    createDependencyDefinition(): DependencyDefinition {
+        throw new RuntimeError("Expected dependency region.");
+    }
+    
+    createString(): string {
+        throw new RuntimeError("Expected string region.");
+    }
 }
 
 export class AtomicFileRegion extends FileRegion {
@@ -130,6 +139,10 @@ export class AtomicFileRegion extends FileRegion {
             offset = tempResult.offset;
         }
         return output;
+    }
+    
+    createString(): string {
+        return this.contentBuffer.toString("utf8");
     }
 }
 
@@ -181,6 +194,18 @@ export class CompositeFileRegion extends FileRegion {
             return new GuardFunctionDefinition(this);
         } else {
             throw new RuntimeError("Expected function region.");
+        }
+    }
+    
+    createDependencyDefinition(): DependencyDefinition {
+        if (this.regionType === REGION_TYPE.pathDep) {
+            return new PathDependencyDefinition(this);
+        } else if (this.regionType === REGION_TYPE.verDep) {
+            return new VersionDependencyDefinition(this);
+        } else if (this.regionType === REGION_TYPE.ifaceDep) {
+            return new InterfaceDependencyDefinition(this);
+        } else {
+            throw new RuntimeError("Expected dependency region.");
         }
     }
 }
