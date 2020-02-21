@@ -8,6 +8,7 @@ import {FrameLength} from "objects/allocation";
 import {FunctionDefinition, PrivateFunctionDefinition, PublicFunctionDefinition, GuardFunctionDefinition} from "objects/functionDefinition";
 import {Instruction} from "objects/instruction";
 import {DependencyDefinition, PathDependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
+import {VersionNumber} from "objects/versionNumber";
 
 export const REGION_TYPE = {
     
@@ -91,6 +92,10 @@ export abstract class FileRegion {
     createString(): string {
         throw new RuntimeError("Expected string region.");
     }
+    
+    createVersionNumber(): VersionNumber {
+        throw new RuntimeError("Expected version number region.");
+    }
 }
 
 export class AtomicFileRegion extends FileRegion {
@@ -126,7 +131,7 @@ export class AtomicFileRegion extends FileRegion {
         }
         return new FrameLength(
             bufferUtils.readUInt(this.contentBuffer, 0, 8),
-            bufferUtils.readUInt(this.contentBuffer, 8, 8),
+            bufferUtils.readUInt(this.contentBuffer, 8, 8)
         );
     }
     
@@ -143,6 +148,17 @@ export class AtomicFileRegion extends FileRegion {
     
     createString(): string {
         return this.contentBuffer.toString("utf8");
+    }
+    
+    createVersionNumber(): VersionNumber {
+        if (this.contentBuffer.length !== 12) {
+            throw new RuntimeError("Version number buffer has incorrect size.");
+        }
+        return new VersionNumber(
+            bufferUtils.readUInt(this.contentBuffer, 0, 4),
+            bufferUtils.readUInt(this.contentBuffer, 4, 4),
+            bufferUtils.readUInt(this.contentBuffer, 8, 4)
+        );
     }
 }
 

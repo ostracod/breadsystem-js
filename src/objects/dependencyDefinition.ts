@@ -1,7 +1,9 @@
 
 import {bufferUtils} from "utils/bufferUtils";
+
 import {RuntimeError} from "objects/runtimeError";
 import {REGION_TYPE, FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
+import {VersionNumber} from "objects/versionNumber";
 
 export abstract class DependencyDefinition {
     
@@ -37,19 +39,30 @@ export class PathDependencyDefinition extends DependencyDefinition {
 
 export class VersionDependencyDefinition extends DependencyDefinition {
     
+    versionNumber: VersionNumber;
+    
     constructor(fileRegion: CompositeFileRegion) {
         super(fileRegion);
-        // TODO: Consume more regions.
-        
+        let tempRegion = this.fileRegion.getRegionByType(REGION_TYPE.depVer);
+        this.versionNumber = tempRegion.createVersionNumber();
     }
 }
 
 export class InterfaceDependencyDefinition extends DependencyDefinition {
     
+    dependencyIndexList: number[];
+    
     constructor(fileRegion: CompositeFileRegion) {
         super(fileRegion);
-        // TODO: Consume more regions.
-        
+        let tempAtomicRegion = this.fileRegion.getRegionByType(
+            REGION_TYPE.depIndexes
+        ) as AtomicFileRegion;
+        this.dependencyIndexList = [];
+        let tempBuffer = tempAtomicRegion.contentBuffer;
+        for (let index = 0; index < tempBuffer.length; index += 4) {
+            let tempValue = bufferUtils.readUInt(tempBuffer, index, 4);
+            this.dependencyIndexList.push(tempValue);
+        }
     }
 }
 
