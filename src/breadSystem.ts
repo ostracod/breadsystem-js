@@ -1,10 +1,10 @@
 
 // This code is intended to perform the functionality of rootpath.
 // Put all other code after these few lines.
-import * as path from "path";
-process.env.NODE_PATH = path.dirname(__filename);
+import * as pathUtils from "path";
+process.env.NODE_PATH = pathUtils.dirname(__filename);
 require("module")._initPaths();
-export const projectPath = path.dirname(__dirname);
+export const projectPath = pathUtils.dirname(__dirname);
 
 import {appUtils} from "utils/appUtils";
 import {runningAgentList} from "objects/agent";
