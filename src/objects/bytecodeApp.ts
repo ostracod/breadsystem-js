@@ -1,7 +1,7 @@
 
 import * as fs from "fs";
 
-import {pathUtils} from "utils/pathUtils";
+import {volumeUtils} from "utils/volumeUtils";
 import {parseUtils} from "utils/parseUtils";
 
 import {RuntimeError} from "objects/runtimeError";
@@ -12,16 +12,16 @@ import {DependencyDefinition} from "objects/dependencyDefinition";
 
 export class BytecodeApp {
     
-    path: string;
+    absolutePath: string;
     fileRegion: CompositeFileRegion;
     functionDefinitionList: FunctionDefinition[];
     initFunctionDefinition: FunctionDefinition;
     globalFrameLength: FrameLength;
     dependencyDefinitionList: DependencyDefinition[];
     
-    constructor(path: string) {
-        this.path = path;
-        let tempNativePath = pathUtils.convertPathToNativePath(path);
+    constructor(absolutePath: string) {
+        this.absolutePath = absolutePath;
+        let tempNativePath = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
         let content = fs.readFileSync(tempNativePath);
         let tempResult = parseUtils.parseRegion(content, 0);
         if (tempResult.region.regionType !== REGION_TYPE.appFile) {
@@ -52,6 +52,17 @@ export class BytecodeApp {
         console.log(this.globalFrameLength);
         console.log(this.dependencyDefinitionList);
         
+    }
+    
+    // Returns whether all required dependency paths were resolved.
+    resolveDependencyPaths(): boolean {
+        for (let dependencyDefinition of this.dependencyDefinitionList) {
+            let tempResult = dependencyDefinition.resolvePath();
+            if (!tempResult && !dependencyDefinition.isOptional) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

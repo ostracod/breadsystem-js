@@ -1,5 +1,5 @@
 
-import {pathUtils} from "utils/pathUtils";
+import {volumeUtils} from "utils/volumeUtils";
 import {Agent} from "objects/agent";
 
 const bootAppsPath = ":bootApps";
@@ -12,9 +12,9 @@ class AppUtils {
     }
     
     getBootAppPaths(): string[] {
-        let tempNameList = pathUtils.getDirItems(bootAppsPath);
+        let tempNameList = volumeUtils.getDirItems(bootAppsPath);
         return tempNameList.map(name => {
-            return pathUtils.joinPath(bootAppsPath, name);
+            return volumeUtils.joinPath(bootAppsPath, name);
         });
     }
     

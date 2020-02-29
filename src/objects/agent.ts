@@ -1,4 +1,5 @@
 
+import {RuntimeError} from "objects/runtimeError";
 import {Allocation} from "objects/allocation";
 import {Instruction} from "objects/instruction";
 import {BytecodeApp} from "objects/bytecodeApp";
@@ -14,8 +15,12 @@ export class Agent {
     globalFrame: Allocation;
     currentInstruction: Instruction;
     
-    constructor(appPath: string) {
-        this.bytecodeApp = new BytecodeApp(appPath);
+    constructor(absoluteAppPath: string) {
+        this.bytecodeApp = new BytecodeApp(absoluteAppPath);
+        let tempResult = this.bytecodeApp.resolveDependencyPaths();
+        if (!tempResult) {
+            throw new RuntimeError("Could not resolve all required dependency paths.");
+        }
         runningAgentList.push(this);
         this.instructionIndex = 0;
         this.currentFunctionDefinition = this.bytecodeApp.initFunctionDefinition;

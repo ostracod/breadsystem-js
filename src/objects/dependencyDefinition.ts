@@ -1,5 +1,6 @@
 
 import {bufferUtils} from "utils/bufferUtils";
+import {volumeUtils} from "utils/volumeUtils";
 
 import {RuntimeError} from "objects/runtimeError";
 import {REGION_TYPE, FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
@@ -8,7 +9,8 @@ import {VersionNumber} from "objects/versionNumber";
 export abstract class DependencyDefinition {
     
     fileRegion: CompositeFileRegion;
-    path: string;
+    unresolvedPath: string;
+    resolvedPath: string;
     isOptional: boolean;
     isImplemented: boolean;
     isGuarded: boolean;
@@ -16,7 +18,8 @@ export abstract class DependencyDefinition {
     constructor(fileRegion: CompositeFileRegion) {
         this.fileRegion = fileRegion;
         let tempRegion = this.fileRegion.getRegionByType(REGION_TYPE.path);
-        this.path = tempRegion.createString();
+        this.unresolvedPath = tempRegion.createString();
+        this.resolvedPath = null;
         let tempAtomicRegion = this.fileRegion.getRegionByType(
             REGION_TYPE.depAttrs
         ) as AtomicFileRegion;
@@ -28,12 +31,32 @@ export abstract class DependencyDefinition {
         this.isImplemented = ((tempValue & 0x02) > 0);
         this.isGuarded = ((tempValue & 0x01) > 0);
     }
+    
+    // Returns whether the path was resolved successfully.
+    resolvePath(): boolean {
+        if (volumeUtils.pathIsAbsolute(this.unresolvedPath)) {
+            return this.resolveAbsolutePath(this.unresolvedPath);
+        } else {
+            throw new RuntimeError("Resolving relative dependency paths is not yet supported.");
+        }
+    }
+    
+    // Returns whether the path was resolved successfully.
+    abstract resolveAbsolutePath(absolutePath: string): boolean;
 }
 
 export class PathDependencyDefinition extends DependencyDefinition {
     
     constructor(fileRegion: CompositeFileRegion) {
         super(fileRegion);
+    }
+    
+    resolveAbsolutePath(absolutePath: string): boolean {
+        if (!volumeUtils.vItemExists(absolutePath)) {
+            return false;
+        }
+        this.resolvedPath = absolutePath;
+        return true;
     }
 }
 
@@ -45,6 +68,12 @@ export class VersionDependencyDefinition extends DependencyDefinition {
         super(fileRegion);
         let tempRegion = this.fileRegion.getRegionByType(REGION_TYPE.depVer);
         this.versionNumber = tempRegion.createVersionNumber();
+    }
+    
+    resolveAbsolutePath(absolutePath: string): boolean {
+        // TODO: Implement.
+        throw new RuntimeError("Version dependencies are not yet implemented.");
+        
     }
 }
 
@@ -63,6 +92,12 @@ export class InterfaceDependencyDefinition extends DependencyDefinition {
             let tempValue = bufferUtils.readUInt(tempBuffer, index, 4);
             this.dependencyIndexList.push(tempValue);
         }
+    }
+    
+    resolveAbsolutePath(absolutePath: string): boolean {
+        // TODO: Implement.
+        throw new RuntimeError("Interface dependencies are not yet implemented.");
+        
     }
 }
 

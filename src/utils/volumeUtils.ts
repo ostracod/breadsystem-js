@@ -1,29 +1,28 @@
 
-import * as nativePathUtils from "path";
+import * as pathUtils from "path";
 import * as fs from "fs";
 
 const primaryVolumeNativePath = "./primaryVolume";
 
-class PathUtils {
+class VolumeUtils {
+    
+    // TODO: Support volume names and escaped characters in paths.
     
     joinPath(tail: string, head: string): string {
-        if (tail.length > 0 && tail.substring(tail.length - 1, tail.length) === "/") {
-            tail = tail.substring(0, tail.length - 1);
+        if (tail === ":") {
+            return tail + head;
         }
         return tail + "/" + head;
     }
     
-    convertPathToNativePath(path: string): string {
-        if (path.length >= 1 && path.substring(0, 1) === ":") {
-            path = path.substring(1, path.length);
-        }
-        let tempNameList = path.split("/");
+    convertAbsolutePathToNativePath(absolutePath: string): string {
+        let tempNameList = absolutePath.substring(1, absolutePath.length).split("/");
         let output = primaryVolumeNativePath;
         for (let index = 0; index < tempNameList.length; index++) {
             let tempName = tempNameList[index];
-            let tempNativePath = nativePathUtils.join(output, "dirContent_" + tempName);
+            let tempNativePath = pathUtils.join(output, "dirContent_" + tempName);
             if (index >= tempNameList.length - 1 && !fs.existsSync(tempNativePath)) {
-                tempNativePath = nativePathUtils.join(output, "fileContent_" + tempName);
+                tempNativePath = pathUtils.join(output, "fileContent_" + tempName);
             }
             if (!fs.existsSync(tempNativePath)) {
                 return null;
@@ -33,8 +32,8 @@ class PathUtils {
         return output;
     }
     
-    getDirItems(path: string): string[] {
-        let tempNativePath = pathUtils.convertPathToNativePath(path);
+    getDirItems(absolutePath: string): string[] {
+        let tempNativePath = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
         let tempNameList = fs.readdirSync(tempNativePath)
         let output = [];
         for (let name of tempNameList) {
@@ -48,8 +47,17 @@ class PathUtils {
         }
         return output;
     }
+    
+    pathIsAbsolute(path: string): boolean {
+        return (path.substring(0, 1) === ":");
+    }
+    
+    vItemExists(absolutePath: string): boolean {
+        let tempPath = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
+        return fs.existsSync(tempPath);
+    }
 }
 
-export let pathUtils = new PathUtils();
+export let volumeUtils = new VolumeUtils();
 
 
