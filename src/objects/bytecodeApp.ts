@@ -1,10 +1,10 @@
 
 import * as fs from "fs";
 
-import {volumeUtils} from "utils/volumeUtils";
 import {parseUtils} from "utils/parseUtils";
 
 import {RuntimeError} from "objects/runtimeError";
+import {FileHandle} from "objects/fileHandle";
 import {FrameLength} from "objects/allocation";
 import {FunctionDefinition} from "objects/functionDefinition";
 import {REGION_TYPE, CompositeFileRegion} from "objects/fileRegion";
@@ -21,8 +21,10 @@ export class BytecodeApp {
     
     constructor(absolutePath: string) {
         this.absolutePath = absolutePath;
-        let tempNativePath = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
-        let content = fs.readFileSync(tempNativePath);
+        let fileHandle = new FileHandle(absolutePath);
+        let fileSize = fileHandle.getSize();
+        let content = fileHandle.read(0, fileSize);
+        fileHandle.close();
         let tempResult = parseUtils.parseRegion(content, 0);
         if (tempResult.region.regionType !== REGION_TYPE.appFile) {
             throw new RuntimeError("Expected appFile region.");
