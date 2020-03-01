@@ -15,7 +15,7 @@ function timerEvent(): void {
     }
     for (let index = runningAgentList.length - 1; index >= 0; index--) {
         let tempAgent = runningAgentList[index];
-        tempAgent.performNextInstruction();
+        tempAgent.timerEvent();
     }
 }
 

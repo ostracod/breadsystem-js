@@ -1,14 +1,26 @@
 
-import {volumeUtils} from "utils/volumeUtils";
-import {Agent} from "objects/agent";
+import {FILE_TYPE, volumeUtils} from "utils/volumeUtils";
+import {RuntimeError} from "objects/runtimeError";
+import {BytecodeAgent} from "objects/agent";
 
 const bootAppsPath = ":bootApps";
 
 class AppUtils {
     
-    launchApp(path: string): void {
-        console.log("Launching app: " + path);
-        new Agent(path);
+    launchApp(absolutePath: string): void {
+        console.log("Launching app: " + absolutePath);
+        if (volumeUtils.vItemIsDir(absolutePath)) {
+            throw new RuntimeError("Launching app bundles is not yet supported.");
+        } else {
+            let tempType = volumeUtils.getVItemType(absolutePath);
+            if (tempType === FILE_TYPE.bytecodeApp) {
+                new BytecodeAgent(absolutePath);
+            } else if (tempType === FILE_TYPE.systemApp) {
+                throw new RuntimeError("Launching system apps is not yet supported.");
+            } else {
+                throw new RuntimeError("Expected app.");
+            }
+        }
     }
     
     getBootAppPaths(): string[] {

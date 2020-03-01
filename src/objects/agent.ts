@@ -1,47 +1,18 @@
 
-import {RuntimeError} from "objects/runtimeError";
-import {Allocation} from "objects/allocation";
-import {Instruction} from "objects/instruction";
-import {BytecodeApp} from "objects/bytecodeApp";
-import {FunctionDefinition} from "objects/functionDefinition";
+import {BytecodeInterpreter} from "objects/bytecodeInterpreter";
 
 export let runningAgentList = [];
 
-export class Agent {
+export abstract class Agent {
     
-    bytecodeApp: BytecodeApp;
-    instructionIndex: number;
-    currentFunctionDefinition: FunctionDefinition;
-    globalFrame: Allocation;
-    currentInstruction: Instruction;
+    appPath: string;
     
     constructor(absoluteAppPath: string) {
-        this.bytecodeApp = new BytecodeApp(absoluteAppPath);
-        let tempResult = this.bytecodeApp.resolveDependencyPaths();
-        if (!tempResult) {
-            throw new RuntimeError("Could not resolve all required dependency paths.");
-        }
+        this.appPath = absoluteAppPath;
         runningAgentList.push(this);
-        this.instructionIndex = 0;
-        this.currentFunctionDefinition = this.bytecodeApp.initFunctionDefinition;
-        this.globalFrame = new Allocation(this.bytecodeApp.globalFrameLength);
-        this.currentInstruction = null;
     }
     
-    performNextInstruction(): void {
-        if (this.currentFunctionDefinition === null) {
-            return;
-        }
-        let tempInstructionList = this.currentFunctionDefinition.instructionList;
-        if (this.instructionIndex >= tempInstructionList.length) {
-            return;
-        }
-        this.currentInstruction = tempInstructionList[this.instructionIndex];
-        this.instructionIndex += 1;
-        let opcode = this.currentInstruction.opcode;
-        // TODO: Evaluate instruction.
-        
-    }
+    abstract timerEvent(): void;
     
     terminate(): void {
         let index = runningAgentList.indexOf(this);
@@ -50,5 +21,21 @@ export class Agent {
         }
     }
 }
+
+export class BytecodeAgent extends Agent {
+    
+    bytecodeInterpreter: BytecodeInterpreter;
+    
+    constructor(absoluteAppPath: string) {
+        super(absoluteAppPath);
+        this.bytecodeInterpreter = new BytecodeInterpreter(this);
+    }
+    
+    timerEvent(): void {
+        this.bytecodeInterpreter.performNextInstruction();
+    }
+}
+
+// TODO: Create SystemAgent class for system apps.
 
 
