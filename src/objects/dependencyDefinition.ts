@@ -1,10 +1,12 @@
 
 import {bufferUtils} from "utils/bufferUtils";
-import {volumeUtils} from "utils/volumeUtils";
+import {DIR_TYPE, volumeUtils} from "utils/volumeUtils";
 
 import {RuntimeError} from "objects/runtimeError";
 import {REGION_TYPE, FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
 import {VersionNumber} from "objects/versionNumber";
+
+const versionDirectoryNameRegex = /^ver_(\d+)_(\d+)_(\d+)$/;
 
 export abstract class DependencyDefinition {
     
@@ -71,9 +73,40 @@ export class VersionDependencyDefinition extends DependencyDefinition {
     }
     
     resolveAbsolutePath(absolutePath: string): boolean {
-        // TODO: Implement.
-        throw new RuntimeError("Version dependencies are not yet implemented.");
-        
+        if (!volumeUtils.vItemExists(absolutePath)) {
+            return false;
+        }
+        if (!volumeUtils.vItemIsDir(absolutePath)) {
+            return false;
+        }
+        let tempType = volumeUtils.getVItemType(absolutePath);
+        if (tempType !== DIR_TYPE.appBundle && tempType !== DIR_TYPE.ifaceBundle) {
+            return false;
+        }
+        let tempNameList = volumeUtils.getDirItems(absolutePath);
+        for (let name of tempNameList) {
+            let tempResult = name.match(versionDirectoryNameRegex);
+            if (tempResult === null) {
+                continue;
+            }
+            let tempVersionNumber = new VersionNumber(
+                parseInt(tempResult[1]),
+                parseInt(tempResult[2]),
+                parseInt(tempResult[3])
+            );
+            if (!tempVersionNumber.satisfiesRequirement(this.versionNumber)) {
+                continue;
+            }
+            let tempPath = volumeUtils.joinPath(absolutePath, name);
+            tempPath = volumeUtils.joinPath(tempPath, "main");
+            if (!volumeUtils.vItemExists(tempPath)) {
+                continue;
+            }
+            // TODO: Verify that requirements of the app/iface can also be met.
+            this.resolvedPath = tempPath;
+            return true;
+        }
+        return false;
     }
 }
 

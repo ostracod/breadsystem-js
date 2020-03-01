@@ -12,7 +12,20 @@ const NATIVE_PATH_PREFIX = {
     fileMetadata: "fileMetadata_",
     dirContent: "dirContent_",
     dirMetadata: "dirMetadata_"
-}
+};
+
+export const FILE_TYPE = {
+    generic: 0,
+    bytecodeApp: 1,
+    systemApp: 2,
+    iface: 3
+};
+
+export const DIR_TYPE = {
+    generic: 0,
+    appBundle: 1,
+    ifaceBundle: 2
+};
 
 class VolumeUtils {
     
@@ -89,8 +102,9 @@ class VolumeUtils {
         for (let name of tempNameList) {
             let tempIndex = name.indexOf("_");
             if (tempIndex >= 0) {
-                let tempPrefix = name.substring(0, tempIndex);
-                if (tempPrefix === "fileContent" || tempPrefix === "dirContent") {
+                let tempPrefix = name.substring(0, tempIndex + 1);
+                if (tempPrefix === NATIVE_PATH_PREFIX.fileContent
+                        || tempPrefix === NATIVE_PATH_PREFIX.dirContent) {
                     output.push(name.substring(tempIndex + 1, name.length));
                 }
             }
@@ -107,7 +121,15 @@ class VolumeUtils {
         return (tempResult !== null);
     }
     
-    getVItemType(absolutePath: string): boolean {
+    vItemIsDir(absolutePath: string): boolean {
+        let tempResult = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
+        if (tempResult === null) {
+            throw new RuntimeError("Volume item does not exist.");
+        }
+        return tempResult.isDir;
+    }
+    
+    getVItemType(absolutePath: string): number {
         let tempResult = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
         let tempContent = fs.readFileSync(tempResult.metadataPath, "utf8");
         let tempMetadata = JSON.parse(tempContent);

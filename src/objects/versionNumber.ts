@@ -18,6 +18,11 @@ export class VersionNumber {
     getDisplayString(): string {
         return this.majorNumber + "." + this.minorNumber + "." + this.patchNumber;
     }
+    
+    satisfiesRequirement(versionNumber: VersionNumber): boolean {
+        return (this.majorNumber === versionNumber.majorNumber
+            && this.minorNumber >= versionNumber.minorNumber);
+    }
 }
 
 
