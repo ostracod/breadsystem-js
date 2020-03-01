@@ -14,7 +14,11 @@ export class FileHandle {
     
     constructor(absolutePath: string) {
         this.absolutePath = absolutePath;
-        this.nativePath = volumeUtils.convertAbsolutePathToNativePath(this.absolutePath);
+        let tempResult = volumeUtils.convertAbsolutePathToNativePath(this.absolutePath);
+        if (tempResult.isDir) {
+            throw new RuntimeError("Expected file.");
+        }
+        this.nativePath = tempResult.contentPath;
         this.nativeFileHandle = fs.openSync(this.nativePath, "r+");
         this.isOpen = true;
     }

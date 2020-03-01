@@ -1,8 +1,18 @@
 
+import {RuntimeError} from "objects/runtimeError";
+
 import * as pathUtils from "path";
 import * as fs from "fs";
 
-const primaryVolumeNativePath = "./primaryVolume";
+const primaryVolumeNativePath = "./exampleVolume";
+const primaryVolumeRootName = "primaryVolume";
+
+const NATIVE_PATH_PREFIX = {
+    fileContent: "fileContent_",
+    fileMetadata: "fileMetadata_",
+    dirContent: "dirContent_",
+    dirMetadata: "dirMetadata_"
+}
 
 class VolumeUtils {
     
@@ -15,26 +25,66 @@ class VolumeUtils {
         return tail + "/" + head;
     }
     
-    convertAbsolutePathToNativePath(absolutePath: string): string {
-        let tempNameList = absolutePath.substring(1, absolutePath.length).split("/");
-        let output = primaryVolumeNativePath;
-        for (let index = 0; index < tempNameList.length; index++) {
-            let tempName = tempNameList[index];
-            let tempNativePath = pathUtils.join(output, "dirContent_" + tempName);
-            if (index >= tempNameList.length - 1 && !fs.existsSync(tempNativePath)) {
-                tempNativePath = pathUtils.join(output, "fileContent_" + tempName);
-            }
-            if (!fs.existsSync(tempNativePath)) {
+    convertAbsolutePathToNativePath(
+        absolutePath: string
+    ): {contentPath: string, metadataPath: string, isDir: boolean} {
+        let tempPath = absolutePath.substring(1, absolutePath.length);
+        let tempNameList;
+        if (tempPath.length > 0) {
+            tempNameList = tempPath.split("/");
+        } else {
+            tempNameList = [];
+        }
+        tempNameList.unshift(primaryVolumeRootName);
+        let directoryPath = primaryVolumeNativePath;
+        for (let index = 0; index < tempNameList.length - 1; index++) {
+            directoryPath = pathUtils.join(
+                directoryPath,
+                NATIVE_PATH_PREFIX.dirContent + tempNameList[index]
+            );
+        }
+        let lastName = tempNameList[tempNameList.length - 1];
+        let contentPath = pathUtils.join(
+            directoryPath,
+            NATIVE_PATH_PREFIX.fileContent + lastName
+        );
+        let nativePathIsDir: boolean;
+        if (fs.existsSync(contentPath)) {
+            nativePathIsDir = false;
+        } else {
+            contentPath = pathUtils.join(
+                directoryPath,
+                NATIVE_PATH_PREFIX.dirContent + lastName
+            );
+            if (!fs.existsSync(contentPath)) {
                 return null;
             }
-            output = tempNativePath;
+            nativePathIsDir = true;
         }
-        return output;
+        let tempPrefix: string;
+        if (nativePathIsDir) {
+            tempPrefix = NATIVE_PATH_PREFIX.dirMetadata;
+        } else {
+            tempPrefix = NATIVE_PATH_PREFIX.fileMetadata;
+        }
+        let metadataPath = pathUtils.join(
+            directoryPath,
+            tempPrefix + lastName
+        );
+        return {
+            contentPath: contentPath,
+            metadataPath: metadataPath,
+            isDir: nativePathIsDir
+        };
     }
     
     getDirItems(absolutePath: string): string[] {
-        let tempNativePath = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
-        let tempNameList = fs.readdirSync(tempNativePath)
+        let tempResult = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
+        if (!tempResult.isDir) {
+            throw new RuntimeError("Expected directory.");
+        }
+        let tempNativePath = tempResult.contentPath;
+        let tempNameList = fs.readdirSync(tempNativePath);
         let output = [];
         for (let name of tempNameList) {
             let tempIndex = name.indexOf("_");
@@ -53,8 +103,15 @@ class VolumeUtils {
     }
     
     vItemExists(absolutePath: string): boolean {
-        let tempPath = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
-        return fs.existsSync(tempPath);
+        let tempResult = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
+        return (tempResult !== null);
+    }
+    
+    getVItemType(absolutePath: string): boolean {
+        let tempResult = volumeUtils.convertAbsolutePathToNativePath(absolutePath);
+        let tempContent = fs.readFileSync(tempResult.metadataPath, "utf8");
+        let tempMetadata = JSON.parse(tempContent);
+        return tempMetadata.type;
     }
 }
 
