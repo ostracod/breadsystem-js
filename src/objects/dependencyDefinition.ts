@@ -16,6 +16,7 @@ export abstract class DependencyDefinition {
     isOptional: boolean;
     isImplemented: boolean;
     isGuarded: boolean;
+    index: number;
     
     constructor(fileRegion: CompositeFileRegion) {
         this.fileRegion = fileRegion;
@@ -32,6 +33,7 @@ export abstract class DependencyDefinition {
         this.isOptional = ((tempValue & 0x04) > 0);
         this.isImplemented = ((tempValue & 0x02) > 0);
         this.isGuarded = ((tempValue & 0x01) > 0);
+        this.index = null;
     }
     
     // Returns whether the path was resolved successfully.

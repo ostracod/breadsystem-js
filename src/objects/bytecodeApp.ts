@@ -6,7 +6,7 @@ import {parseUtils} from "utils/parseUtils";
 import {RuntimeError} from "objects/runtimeError";
 import {FileHandle} from "objects/fileHandle";
 import {FrameLength} from "objects/allocation";
-import {FunctionDefinition} from "objects/functionDefinition";
+import {FunctionDefinition, PublicFunctionDefinition} from "objects/functionDefinition";
 import {REGION_TYPE, CompositeFileRegion} from "objects/fileRegion";
 import {DependencyDefinition} from "objects/dependencyDefinition";
 
@@ -15,7 +15,7 @@ export class BytecodeApp {
     absolutePath: string;
     fileRegion: CompositeFileRegion;
     functionDefinitionList: FunctionDefinition[];
-    initFunctionDefinition: FunctionDefinition;
+    initFunctionDefinition: PublicFunctionDefinition;
     globalFrameLength: FrameLength;
     dependencyDefinitionList: DependencyDefinition[];
     
@@ -49,11 +49,38 @@ export class BytecodeApp {
                 return region.createDependencyDefinition();
             });
         }
+        for (let index = 0; index < this.dependencyDefinitionList.length; index++) {
+            let tempDependencyDefinition = this.dependencyDefinitionList[index];
+            tempDependencyDefinition.index = index;
+        }
         // TODO: Consume more regions.
         console.log(this.functionDefinitionList);
         console.log(this.globalFrameLength);
         console.log(this.dependencyDefinitionList);
         
+    }
+    
+    getImplementedDependencyDefinition(absolutePath: string): DependencyDefinition {
+        for (let dependencyDefinition of this.dependencyDefinitionList) {
+            if (dependencyDefinition.resolvedPath === absolutePath
+                    && dependencyDefinition.isImplemented) {
+                return dependencyDefinition;
+            }
+        }
+        return null;
+    }
+    
+    getPublicFunction(dependencyDefinition: DependencyDefinition, name: string): PublicFunctionDefinition {
+        for (let functionDefinition of this.functionDefinitionList) {
+            if (!(functionDefinition instanceof PublicFunctionDefinition)) {
+                continue;
+            }
+            let publicFunctionDefinition = functionDefinition as PublicFunctionDefinition;
+            if (publicFunctionDefinition.interfaceIndex === dependencyDefinition.index) {
+                return publicFunctionDefinition;
+            }
+        }
+        throw new RuntimeError("App is missing public function.");
     }
     
     // Returns whether all required dependency paths were resolved.
@@ -63,6 +90,15 @@ export class BytecodeApp {
             if (!tempResult && !dependencyDefinition.isOptional) {
                 return false;
             }
+        }
+        let tempDependencyDefinition = this.getImplementedDependencyDefinition(
+            ":system/ifaces/initable/ver_1_0_0/main"
+        );
+        if (tempDependencyDefinition !== null) {
+            this.initFunctionDefinition = this.getPublicFunction(
+                tempDependencyDefinition,
+                "init"
+            );
         }
         return true;
     }
