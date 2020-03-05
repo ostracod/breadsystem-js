@@ -32,7 +32,7 @@ export class BytecodeAgent extends Agent {
     }
     
     timerEvent(): void {
-        this.bytecodeInterpreter.performNextInstruction();
+        this.bytecodeInterpreter.evaluateNextInstruction();
     }
 }
 

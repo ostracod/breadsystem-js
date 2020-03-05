@@ -1,28 +1,27 @@
 
+import {instructionUtils} from "utils/instructionUtils";
+
 import {RuntimeError} from "objects/runtimeError";
 import {Agent} from "objects/agent";
 import {BytecodeApp} from "objects/bytecodeApp";
 import {Allocation} from "objects/allocation";
 import {FunctionDefinition} from "objects/functionDefinition";
-import {Instruction} from "objects/instruction";
 
-class FunctionInvocation {
+export class FunctionInvocation {
     
     bytecodeInterpreter: BytecodeInterpreter;
     functionDefinition: FunctionDefinition;
     hasFinished: boolean;
     instructionIndex: number;
-    currentInstruction: Instruction;
     
     constructor(bytecodeInterpreter: BytecodeInterpreter, functionDefinition: FunctionDefinition) {
         this.bytecodeInterpreter = bytecodeInterpreter;
         this.functionDefinition = functionDefinition;
         this.hasFinished = false;
         this.instructionIndex = 0;
-        this.currentInstruction = null;
     }
     
-    performNextInstruction(): void {
+    evaluateNextInstruction(): void {
         if (this.hasFinished) {
             return;
         }
@@ -31,12 +30,9 @@ class FunctionInvocation {
             this.hasFinished = true;
             return;
         }
-        this.currentInstruction = tempInstructionList[this.instructionIndex];
+        let tempInstruction = tempInstructionList[this.instructionIndex];
         this.instructionIndex += 1;
-        let opcode = this.currentInstruction.opcode;
-        // TODO: Evaluate instruction.
-        console.log(this.currentInstruction);
-        
+        instructionUtils.evaluateInstruction(this, tempInstruction);
     }
 }
 
@@ -67,12 +63,12 @@ export class BytecodeInterpreter {
         this.callStack.push(tempInvocation);
     }
     
-    performNextInstruction(): void {
+    evaluateNextInstruction(): void {
         if (this.callStack.length <= 0) {
             return;
         }
         let tempInvocation = this.callStack[this.callStack.length - 1];
-        tempInvocation.performNextInstruction();
+        tempInvocation.evaluateNextInstruction();
         if (tempInvocation.hasFinished) {
             this.callStack.pop();
         }
