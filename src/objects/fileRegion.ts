@@ -4,7 +4,7 @@ import {bufferUtils} from "utils/bufferUtils";
 import {parseUtils} from "utils/parseUtils";
 
 import {RuntimeError} from "objects/runtimeError";
-import {FrameLength} from "objects/allocation";
+import {AllocationLength} from "objects/allocation";
 import {FunctionDefinition, PrivateFunctionDefinition, PublicFunctionDefinition, GuardFunctionDefinition} from "objects/functionDefinition";
 import {Instruction} from "objects/instruction";
 import {DependencyDefinition, PathDependencyDefinition, VersionDependencyDefinition, InterfaceDependencyDefinition} from "objects/dependencyDefinition";
@@ -77,7 +77,7 @@ export abstract class FileRegion {
         throw new RuntimeError("Expected function region.");
     }
     
-    createFrameLength(): FrameLength {
+    createFrameLength(): AllocationLength {
         throw new RuntimeError("Expected frame length region.");
     }
     
@@ -125,11 +125,11 @@ export class AtomicFileRegion extends FileRegion {
         return output;
     }
     
-    createFrameLength(): FrameLength {
+    createFrameLength(): AllocationLength {
         if (this.contentBuffer.length !== 16) {
             throw new RuntimeError("Frame length buffer has incorrect size.");
         }
-        return new FrameLength(
+        return new AllocationLength(
             bufferUtils.readUInt(this.contentBuffer, 0, 8),
             bufferUtils.readUInt(this.contentBuffer, 8, 8)
         );

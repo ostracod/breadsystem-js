@@ -7,7 +7,7 @@ import {RuntimeError} from "objects/runtimeError";
 import {FileRegion, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
 import {InstructionArg, ConstantInstructionArg, RefInstructionArg, Instruction} from "objects/instruction";
 import {simpleInstructionRefMap, InstructionRef, PointerInstructionRef} from "objects/instructionRef";
-import {NumberConstant} from "objects/constant";
+import {Constant, NumberConstant, NullConstant} from "objects/constant";
 
 class ParseUtils {
     
@@ -50,17 +50,19 @@ class ParseUtils {
         let dataType = dataTypeMap[dataTypePrefix];
         let tempArg: InstructionArg;
         if (refPrefix === 0) {
+            let tempConstant: Constant;
             if (dataType instanceof NumberType) {
                 let numberType = dataType as NumberType;
                 let tempValue = numberType.readNumber(buffer, offset);
                 offset += numberType.byteAmount;
-                let tempConstant = new NumberConstant(tempValue, numberType);
+                tempConstant = new NumberConstant(tempValue, numberType);
                 tempArg = new ConstantInstructionArg(tempConstant);
             } else if (dataType instanceof PointerType) {
-                tempArg = new ConstantInstructionArg(null);
+                tempConstant = new NullConstant();
             } else {
                 throw new RuntimeError("Invalid argument data type.");
             }
+            tempArg = new ConstantInstructionArg(tempConstant);
         } else {
             let tempRef: InstructionRef;
             let tempIndexArg: InstructionArg;

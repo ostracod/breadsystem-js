@@ -13,12 +13,14 @@ export class FunctionInvocation {
     functionDefinition: FunctionDefinition;
     hasFinished: boolean;
     instructionIndex: number;
+    localFrame: Allocation;
     
     constructor(bytecodeInterpreter: BytecodeInterpreter, functionDefinition: FunctionDefinition) {
         this.bytecodeInterpreter = bytecodeInterpreter;
         this.functionDefinition = functionDefinition;
         this.hasFinished = false;
         this.instructionIndex = 0;
+        this.localFrame = new Allocation(this.functionDefinition.localFrameLength);
     }
     
     evaluateNextInstruction(): void {

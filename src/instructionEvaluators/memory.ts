@@ -4,12 +4,11 @@ import {FunctionInvocation} from "objects/bytecodeInterpreter";
 import {InstructionArg} from "objects/instruction";
 
 instructionUtils.addInstructionEvaluator("wrt", (
-    functionInvocation: FunctionInvocation,
+    context: FunctionInvocation,
     argList: InstructionArg[]
 ): void => {
-    // TODO: Implement.
-    console.log("Hello, I am a wrt instruction!");
-    
+    let tempValue = argList[1].read(context);
+    argList[0].write(context, tempValue);
 });
 
 

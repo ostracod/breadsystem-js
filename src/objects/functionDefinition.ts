@@ -2,15 +2,15 @@
 import {bufferUtils} from "utils/bufferUtils";
 
 import {RuntimeError} from "objects/runtimeError";
-import {FrameLength} from "objects/allocation";
+import {AllocationLength} from "objects/allocation";
 import {Instruction} from "objects/instruction";
 import {REGION_TYPE, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
 
 export abstract class FunctionDefinition {
     
     fileRegion: CompositeFileRegion;
-    argFrameLength: FrameLength;
-    localFrameLength: FrameLength;
+    argFrameLength: AllocationLength;
+    localFrameLength: AllocationLength;
     instructionList: Instruction[];
     
     constructor(fileRegion: CompositeFileRegion) {

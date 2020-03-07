@@ -5,7 +5,7 @@ import {parseUtils} from "utils/parseUtils";
 
 import {RuntimeError} from "objects/runtimeError";
 import {FileHandle} from "objects/fileHandle";
-import {FrameLength} from "objects/allocation";
+import {AllocationLength} from "objects/allocation";
 import {FunctionDefinition, PublicFunctionDefinition} from "objects/functionDefinition";
 import {REGION_TYPE, CompositeFileRegion} from "objects/fileRegion";
 import {DependencyDefinition} from "objects/dependencyDefinition";
@@ -16,7 +16,7 @@ export class BytecodeApp {
     fileRegion: CompositeFileRegion;
     functionDefinitionList: FunctionDefinition[];
     initFunctionDefinition: PublicFunctionDefinition;
-    globalFrameLength: FrameLength;
+    globalFrameLength: AllocationLength;
     dependencyDefinitionList: DependencyDefinition[];
     
     constructor(absolutePath: string) {

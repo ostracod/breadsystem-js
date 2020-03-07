@@ -1,5 +1,5 @@
 
-import {MixedNumber} from "models/items";
+import {MixedNumber, InstructionValue} from "models/items";
 
 import {DataType, BetaType, NumberType, PointerType, pointerType} from "delegates/dataType";
 
@@ -15,6 +15,10 @@ export abstract class Constant {
     
     abstract getDataType(): DataType;
     abstract setDataType(dataType: DataType): void;
+    
+    getInstructionValue(): InstructionValue {
+        throw new RuntimeError("Invalid data type for instruction constant.");
+    }
 }
 
 export class NumberConstant extends Constant {
@@ -42,16 +46,13 @@ export class NumberConstant extends Constant {
         this.numberType = dataType as NumberType;
         this.value = this.numberType.restrictNumber(this.value);
     }
+    
+    getInstructionValue(): InstructionValue {
+        return this.value;
+    }
 }
 
-export class PointerConstant extends Constant {
-    
-    value: Allocation;
-    
-    constructor(value: Allocation) {
-        super();
-        this.value = value;
-    }
+export class NullConstant extends Constant {
     
     getDataType(): DataType {
         return pointerType;
@@ -61,6 +62,10 @@ export class PointerConstant extends Constant {
         if (!(dataType instanceof PointerType)) {
             throw new RuntimeError("Cannot convert alpha type to beta type.");
         }
+    }
+    
+    getInstructionValue(): InstructionValue {
+        return null;
     }
 }
 

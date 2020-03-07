@@ -1,7 +1,12 @@
 
+import {InstructionValue} from "models/items";
+
 import {DataType} from "delegates/dataType";
+
+import {RuntimeError} from "objects/runtimeError";
 import {Constant} from "objects/constant";
 import {InstructionRef} from "objects/instructionRef";
+import {FunctionInvocation} from "objects/bytecodeInterpreter";
 
 export abstract class InstructionArg {
     
@@ -9,6 +14,11 @@ export abstract class InstructionArg {
         // Do nothing.
         
     }
+    
+    abstract read(context: FunctionInvocation): InstructionValue;
+    abstract write(context: FunctionInvocation, value: InstructionValue): void;
+    abstract readWithOffset(context: FunctionInvocation, offset: number): InstructionValue;
+    abstract writeWithOffset(context: FunctionInvocation, offset: number, value: InstructionValue): void;
 }
 
 export class ConstantInstructionArg extends InstructionArg {
@@ -18,6 +28,22 @@ export class ConstantInstructionArg extends InstructionArg {
     constructor(constant: Constant) {
         super();
         this.constant = constant;
+    }
+    
+    read(context: FunctionInvocation): InstructionValue {
+        return this.constant.getInstructionValue();
+    }
+    
+    write(context: FunctionInvocation, value: InstructionValue): void {
+        throw new RuntimeError("Cannot write to constant instruction argument.");
+    }
+    
+    readWithOffset(context: FunctionInvocation, offset: number): InstructionValue {
+        throw new RuntimeError("Cannot read constant argument with offset.");
+    }
+    
+    writeWithOffset(context: FunctionInvocation, offset: number, value: InstructionValue): void {
+        throw new RuntimeError("Cannot write to constant instruction argument.");
     }
 }
 
@@ -36,6 +62,26 @@ export class RefInstructionArg extends InstructionArg {
         this.instructionRef = instructionRef;
         this.dataType = dataType;
         this.indexArg = indexArg;
+    }
+    
+    read(context: FunctionInvocation): InstructionValue {
+        return this.readWithOffset(context, 0);
+    }
+    
+    write(context: FunctionInvocation, value: InstructionValue): void {
+        this.writeWithOffset(context, 0, value);
+    }
+    
+    readWithOffset(context: FunctionInvocation, offset: number): InstructionValue {
+        // TODO: Implement.
+        throw new RuntimeError("Reading from instruction reference is not yet implemented.");
+        
+    }
+    
+    writeWithOffset(context: FunctionInvocation, offset: number, value: InstructionValue): void {
+        // TODO: Implement.
+        throw new RuntimeError("Writing to instruction reference is not yet implemented.");
+        
     }
 }
 
