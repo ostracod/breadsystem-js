@@ -55,7 +55,7 @@ export class Allocation {
     writeInstructionValue(index: number, dataType: DataType, value: InstructionValue): void {
         if (dataType instanceof PointerType) {
             this.checkAlphaIndex(index);
-            if (!(typeof value === "object")) {
+            if (typeof value !== "object") {
                 throw new RuntimeError("Cannot write number to alpha region.");
             }
             this.alphaRegion[index] = value as Allocation;

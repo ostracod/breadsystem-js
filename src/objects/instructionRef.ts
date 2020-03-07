@@ -1,5 +1,12 @@
 
+import {InstructionValue} from "models/items";
+
+import {DataType} from "delegates/dataType";
+
+import {RuntimeError} from "objects/runtimeError";
 import {InstructionArg} from "objects/instruction";
+import {Allocation} from "objects/allocation";
+import {FunctionInvocation} from "objects/bytecodeInterpreter";
 
 export const simpleInstructionRefMap: {[argPrefix: string]: SimpleInstructionRef} = {};
 
@@ -8,6 +15,18 @@ export abstract class InstructionRef {
     constructor() {
         // Do nothing.
         
+    }
+    
+    abstract getAllocation(context: FunctionInvocation): Allocation;
+    
+    read(context: FunctionInvocation, index: number, dataType: DataType): InstructionValue {
+        let tempAllocation = this.getAllocation(context);
+        return tempAllocation.readInstructionValue(index, dataType);
+    }
+    
+    write(context: FunctionInvocation, index: number, dataType: DataType, value: InstructionValue): void {
+        let tempAllocation = this.getAllocation(context);
+        tempAllocation.writeInstructionValue(index, dataType, value);
     }
 }
 
@@ -24,12 +43,20 @@ class GlobalFrameInstructionRef extends SimpleInstructionRef {
     constructor() {
         super(1);
     }
+    
+    getAllocation(context: FunctionInvocation): Allocation {
+        return context.bytecodeInterpreter.globalFrame;
+    }
 }
 
 class LocalFrameInstructionRef extends SimpleInstructionRef {
     
     constructor() {
         super(2);
+    }
+    
+    getAllocation(context: FunctionInvocation): Allocation {
+        return context.localFrame;
     }
 }
 
@@ -38,6 +65,10 @@ class PrevArgFrameInstructionRef extends SimpleInstructionRef {
     constructor() {
         super(3);
     }
+    
+    getAllocation(context: FunctionInvocation): Allocation {
+        throw new RuntimeError("Previous arg frame reference is not yet implemented.");
+    }
 }
 
 class NextArgFrameInstructionRef extends SimpleInstructionRef {
@@ -45,12 +76,20 @@ class NextArgFrameInstructionRef extends SimpleInstructionRef {
     constructor() {
         super(4);
     }
+    
+    getAllocation(context: FunctionInvocation): Allocation {
+        throw new RuntimeError("Next arg frame reference is not yet implemented.");
+    }
 }
 
 class AppDataInstructionRef extends SimpleInstructionRef {
     
     constructor() {
         super(5);
+    }
+    
+    getAllocation(context: FunctionInvocation): Allocation {
+        throw new RuntimeError("App data reference is not yet implemented.");
     }
 }
 
@@ -61,6 +100,17 @@ export class PointerInstructionRef extends InstructionRef {
     constructor(pointerArg: InstructionArg) {
         super();
         this.pointerArg = pointerArg;
+    }
+    
+    getAllocation(context: FunctionInvocation): Allocation {
+        let tempValue = this.pointerArg.read(context);
+        if (typeof tempValue !== "object") {
+            throw new RuntimeError("Cannot use number as pointer in heap allocation reference.");
+        }
+        if (tempValue === null) {
+            throw new RuntimeError("Cannot dereference null pointer.");
+        }
+        return tempValue as Allocation;
     }
 }
 

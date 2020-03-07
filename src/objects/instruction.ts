@@ -1,5 +1,5 @@
 
-import {InstructionValue} from "models/items";
+import {MixedNumber, InstructionValue} from "models/items";
 
 import {DataType} from "delegates/dataType";
 
@@ -64,6 +64,14 @@ export class RefInstructionArg extends InstructionArg {
         this.indexArg = indexArg;
     }
     
+    getIndex(context: FunctionInvocation) {
+        let tempValue = this.indexArg.read(context);
+        if (typeof tempValue === "object") {
+            throw new RuntimeError("Cannot use pointer as heap allocation index.");
+        }
+        return Math.floor(Number(tempValue as MixedNumber));
+    }
+    
     read(context: FunctionInvocation): InstructionValue {
         return this.readWithOffset(context, 0);
     }
@@ -73,15 +81,13 @@ export class RefInstructionArg extends InstructionArg {
     }
     
     readWithOffset(context: FunctionInvocation, offset: number): InstructionValue {
-        // TODO: Implement.
-        throw new RuntimeError("Reading from instruction reference is not yet implemented.");
-        
+        let index = this.getIndex(context);
+        return this.instructionRef.read(context, index + offset, this.dataType);
     }
     
     writeWithOffset(context: FunctionInvocation, offset: number, value: InstructionValue): void {
-        // TODO: Implement.
-        throw new RuntimeError("Writing to instruction reference is not yet implemented.");
-        
+        let index = this.getIndex(context);
+        this.instructionRef.write(context, index + offset, this.dataType, value);
     }
 }
 
