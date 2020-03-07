@@ -5,7 +5,7 @@ This project is a JavaScript implementation of BreadSystem. In the future I woul
 
 ## Usage
 
-The assembler requires Node.js 12 and TypeScript 3.6 or higher.
+BreadSystem JS requires Node.js 12 and TypeScript 3.6 or higher.
 
 Clone https://github.com/ostracod/breadsystem-spec in the parent directory of `breadsystem-js`, then generate `bytecodeInstructions.json`:
 
