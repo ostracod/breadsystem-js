@@ -2,17 +2,10 @@
 import {MixedNumber} from "models/items";
 
 import {instructionUtils} from "utils/instructionUtils";
+import {niceUtils} from "utils/niceUtils";
 
 import {FunctionInvocation} from "objects/bytecodeInterpreter";
 import {InstructionArg} from "objects/instruction";
-
-function mixedNumberIsZero(value: MixedNumber) {
-    if (typeof value === "number") {
-        return (value === 0);
-    } else {
-        return (value === 0n);
-    }
-}
 
 instructionUtils.addInstructionEvaluator("jmp", (
     context: FunctionInvocation,
@@ -28,7 +21,7 @@ instructionUtils.addInstructionEvaluator("jmpZ", (
 ): void => {
     let instructionIndex = argList[0].readConstantInt(context);
     let tempCondition = argList[1].readMixedNumber(context);
-    if (mixedNumberIsZero(tempCondition)) {
+    if (niceUtils.mixedNumberIsZero(tempCondition)) {
         context.instructionIndex = instructionIndex;
     }
 });
@@ -39,7 +32,7 @@ instructionUtils.addInstructionEvaluator("jmpNZ", (
 ): void => {
     let instructionIndex = argList[0].readConstantInt(context);
     let tempCondition = argList[1].readMixedNumber(context);
-    if (!mixedNumberIsZero(tempCondition)) {
+    if (!niceUtils.mixedNumberIsZero(tempCondition)) {
         context.instructionIndex = instructionIndex;
     }
 });

@@ -34,6 +34,22 @@ class NiceUtils {
         }
         return BigInt(Math.floor(value));
     }
+    
+    mixedNumberIsZero(value: MixedNumber): boolean {
+        if (typeof value === "number") {
+            return (value === 0);
+        } else {
+            return (value === 0n);
+        }
+    }
+    
+    convertBooleanToNumber(value: boolean): number {
+        if (value) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }
 
 export let niceUtils = new NiceUtils();

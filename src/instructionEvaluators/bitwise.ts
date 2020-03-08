@@ -1,4 +1,6 @@
 
+import {MixedNumber} from "models/items";
+
 import {instructionUtils} from "utils/instructionUtils";
 
 import {FunctionInvocation} from "objects/bytecodeInterpreter";
@@ -13,38 +15,38 @@ instructionUtils.addInstructionEvaluator("bNot", (
     argList[0].write(context, tempResult);
 });
 
-instructionUtils.addIntOperationEvaluator("bOr", (
+instructionUtils.addBigIntOperationEvaluator("bOr", (
     operand1: bigint,
     operand2: bigint
-): bigint => {
+): MixedNumber => {
     return operand1 | operand2;
 });
 
-instructionUtils.addIntOperationEvaluator("bAnd", (
+instructionUtils.addBigIntOperationEvaluator("bAnd", (
     operand1: bigint,
     operand2: bigint
-): bigint => {
+): MixedNumber => {
     return operand1 & operand2;
 });
 
-instructionUtils.addIntOperationEvaluator("bXor", (
+instructionUtils.addBigIntOperationEvaluator("bXor", (
     operand1: bigint,
     operand2: bigint
 ): bigint => {
     return operand1 ^ operand2;
 });
 
-instructionUtils.addIntOperationEvaluator("bLeft", (
+instructionUtils.addBigIntOperationEvaluator("bLeft", (
     operand1: bigint,
     operand2: bigint
-): bigint => {
+): MixedNumber => {
     return operand1 << operand2;
 });
 
-instructionUtils.addIntOperationEvaluator("bRight", (
+instructionUtils.addBigIntOperationEvaluator("bRight", (
     operand1: bigint,
     operand2: bigint
-): bigint => {
+): MixedNumber => {
     return operand1 >> operand2;
 });
 
