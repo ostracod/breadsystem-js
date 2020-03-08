@@ -40,4 +40,38 @@ instructionUtils.addInstructionEvaluator("copyAlloc", (
     argList[0].write(context, tempAllocation.copy());
 });
 
+instructionUtils.addInstructionEvaluator("allocALen", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[1].readPointer(context);
+    argList[0].write(context, tempAllocation.alphaRegion.length);
+});
+
+instructionUtils.addInstructionEvaluator("setAllocALen", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[0].readPointer(context);
+    let tempLength = argList[1].readInt(context);
+    tempAllocation.setAlphaLength(tempLength);
+});
+
+instructionUtils.addInstructionEvaluator("allocBLen", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[1].readPointer(context);
+    argList[0].write(context, tempAllocation.betaRegion.length);
+});
+
+instructionUtils.addInstructionEvaluator("setAllocBLen", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[0].readPointer(context);
+    let tempLength = argList[1].readInt(context);
+    tempAllocation.setBetaLength(tempLength);
+});
+
 

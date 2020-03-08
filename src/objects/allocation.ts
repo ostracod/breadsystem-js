@@ -83,6 +83,26 @@ export class Allocation {
         this.betaRegion.copy(output.betaRegion);
         return output;
     }
+    
+    setAlphaLength(alphaLength: number): void {
+        if (alphaLength < this.alphaRegion.length) {
+            this.alphaRegion.length = alphaLength;
+        } else {
+            while (this.alphaRegion.length < alphaLength) {
+                this.alphaRegion.push(null);
+            }
+        }
+    }
+    
+    setBetaLength(betaLength: number): void {
+        let tempBetaRegion = Buffer.alloc(betaLength);
+        if (betaLength < this.betaRegion.length) {
+            this.betaRegion.copy(tempBetaRegion, 0, 0, betaLength);
+        } else {
+            this.betaRegion.copy(tempBetaRegion);
+        }
+        this.betaRegion = tempBetaRegion;
+    }
 }
 
 
