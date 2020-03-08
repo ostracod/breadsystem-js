@@ -26,6 +26,9 @@ class InstructionUtils {
             throw new RuntimeError("Unrecognized opcode.");
         }
         let tempInstructionType = instructionTypeMap[instruction.opcode];
+        if (instruction.argList.length !== tempInstructionType.argAmount) {
+            throw new RuntimeError("Incorrect argument amount for opcode ${instruction.opcode}.");
+        }
         let tempEvaluator = tempInstructionType.evaluator;
         if (tempEvaluator === null) {
             throw new RuntimeError("Opcode ${instruction.opcode} is not yet implemented.");

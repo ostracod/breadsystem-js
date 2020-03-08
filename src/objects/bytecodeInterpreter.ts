@@ -14,13 +14,21 @@ export class FunctionInvocation {
     hasFinished: boolean;
     instructionIndex: number;
     localFrame: Allocation;
+    previousArgFrame: Allocation;
+    nextArgFrame: Allocation;
     
-    constructor(bytecodeInterpreter: BytecodeInterpreter, functionDefinition: FunctionDefinition) {
+    constructor(
+        bytecodeInterpreter: BytecodeInterpreter,
+        functionDefinition: FunctionDefinition,
+        previousArgFrame: Allocation
+    ) {
         this.bytecodeInterpreter = bytecodeInterpreter;
         this.functionDefinition = functionDefinition;
         this.hasFinished = false;
         this.instructionIndex = 0;
         this.localFrame = new Allocation(this.functionDefinition.localFrameLength);
+        this.previousArgFrame = previousArgFrame;
+        this.nextArgFrame = null;
     }
     
     evaluateNextInstruction(): void {
@@ -60,8 +68,12 @@ export class BytecodeInterpreter {
         }
     }
     
-    invokeFunction(functionDefinition: FunctionDefinition) {
-        let tempInvocation = new FunctionInvocation(this, functionDefinition);
+    invokeFunction(functionDefinition: FunctionDefinition, previousArgFrame: Allocation = null) {
+        let tempInvocation = new FunctionInvocation(
+            this,
+            functionDefinition,
+            previousArgFrame
+        );
         this.callStack.push(tempInvocation);
     }
     

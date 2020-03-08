@@ -21,11 +21,17 @@ export abstract class InstructionRef {
     
     read(context: FunctionInvocation, index: number, dataType: DataType): InstructionValue {
         let tempAllocation = this.getAllocation(context);
+        if (tempAllocation === null) {
+            throw new RuntimeError("Missing allocation for instruction reference.");
+        }
         return tempAllocation.readInstructionValue(index, dataType);
     }
     
     write(context: FunctionInvocation, index: number, dataType: DataType, value: InstructionValue): void {
         let tempAllocation = this.getAllocation(context);
+        if (tempAllocation === null) {
+            throw new RuntimeError("Missing allocation for instruction reference.");
+        }
         tempAllocation.writeInstructionValue(index, dataType, value);
     }
 }

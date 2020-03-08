@@ -1,6 +1,8 @@
 
 .DS_Store
 dist
+test.bbasm
+initable.biasm
 fileContent_test
 fileContent_main
 

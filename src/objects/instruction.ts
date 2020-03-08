@@ -1,6 +1,8 @@
 
 import {MixedNumber, InstructionValue} from "models/items";
 
+import {niceUtils} from "utils/niceUtils";
+
 import {DataType} from "delegates/dataType";
 
 import {RuntimeError} from "objects/runtimeError";
@@ -19,6 +21,29 @@ export abstract class InstructionArg {
     abstract write(context: FunctionInvocation, value: InstructionValue): void;
     abstract readWithOffset(context: FunctionInvocation, offset: number): InstructionValue;
     abstract writeWithOffset(context: FunctionInvocation, offset: number, value: InstructionValue): void;
+    
+    readMixedNumber(context: FunctionInvocation): MixedNumber {
+        let tempValue = this.read(context);
+        if (typeof tempValue === "object") {
+            throw new RuntimeError("Expected number.");
+        }
+        return tempValue as MixedNumber;
+    }
+    
+    readNumber(context: FunctionInvocation): number {
+        let tempValue = this.readMixedNumber(context);
+        return Number(tempValue);
+    }
+    
+    readInt(context: FunctionInvocation): number {
+        let tempValue = this.readNumber(context);
+        return Math.floor(tempValue);
+    }
+    
+    readBigInt(context: FunctionInvocation): bigint {
+        let tempValue = this.readMixedNumber(context);
+        return niceUtils.convertMixedNumberToBigInt(tempValue);
+    }
 }
 
 export class ConstantInstructionArg extends InstructionArg {
