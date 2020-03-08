@@ -41,6 +41,10 @@ export abstract class InstructionArg {
         return Math.floor(tempValue);
     }
     
+    readConstantInt(context: FunctionInvocation): number {
+        throw new RuntimeError("Expected constant number.");
+    }
+    
     readBigInt(context: FunctionInvocation): bigint {
         let tempValue = this.readMixedNumber(context);
         return niceUtils.convertMixedNumberToBigInt(tempValue);
@@ -78,6 +82,10 @@ export class ConstantInstructionArg extends InstructionArg {
     
     writeWithOffset(context: FunctionInvocation, offset: number, value: InstructionValue): void {
         throw new RuntimeError("Cannot write to constant instruction argument.");
+    }
+    
+    readConstantInt(context: FunctionInvocation): number {
+        return this.readInt(context);
     }
 }
 

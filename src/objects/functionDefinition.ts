@@ -12,6 +12,7 @@ export abstract class FunctionDefinition {
     argFrameLength: AllocationLength;
     localFrameLength: AllocationLength;
     instructionList: Instruction[];
+    jumpTable: number[];
     
     constructor(fileRegion: CompositeFileRegion) {
         this.fileRegion = fileRegion;
@@ -21,9 +22,18 @@ export abstract class FunctionDefinition {
         this.localFrameLength = tempRegion.createFrameLength();
         tempRegion = this.fileRegion.getRegionByType(REGION_TYPE.instrs);
         this.instructionList = tempRegion.createInstructions();
-        // TODO: Consume more regions.
+        let tempAtomicRegion = this.fileRegion.getRegionOrNullByType(
+            REGION_TYPE.jmpTable
+        ) as AtomicFileRegion;
+        this.jumpTable = [];
+        if (tempAtomicRegion !== null) {
+            let tempBuffer = tempAtomicRegion.contentBuffer;
+            for (let index = 0; index < tempBuffer.length; index += 8) {
+                let instructionIndex = bufferUtils.readUInt(tempBuffer, index, 8);
+                this.jumpTable.push(instructionIndex);
+            }
+        }
         console.log(this.instructionList);
-        
     }
 }
 
