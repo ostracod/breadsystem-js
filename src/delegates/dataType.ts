@@ -3,7 +3,7 @@ import {MixedNumber} from "models/items";
 import {niceUtils} from "utils/niceUtils";
 import {bufferUtils} from "utils/bufferUtils";
 
-export var dataTypeMap: {[argPrefix: string]: DataType} = {};
+export let dataTypeMap: {[argPrefix: string]: DataType} = {};
 
 export abstract class DataType {
     
@@ -134,6 +134,7 @@ export class UnsignedIntegerType extends IntegerType {
     }
     
     writeNumber(buffer: Buffer, offset: number, value: MixedNumber): void {
+        value = this.restrictNumber(value);
         let tempValue = niceUtils.convertMixedNumberToBigInt(value);
         bufferUtils.writeBigUInt(buffer, offset, tempValue, this.byteAmount);
     }
@@ -182,6 +183,7 @@ export class SignedIntegerType extends IntegerType {
     }
     
     writeNumber(buffer: Buffer, offset: number, value: MixedNumber): void {
+        value = this.restrictNumber(value);
         let tempValue = niceUtils.convertMixedNumberToBigInt(value);
         bufferUtils.writeBigSInt(buffer, offset, tempValue, this.byteAmount);
     }
@@ -240,16 +242,16 @@ export class StringType extends BetaType {
     }
 }
 
-export var pointerType = new PointerType();
-export var unsignedInteger8Type = new UnsignedIntegerType(1, 1);
-export var unsignedInteger16Type = new UnsignedIntegerType(2, 2);
-export var unsignedInteger32Type = new UnsignedIntegerType(3, 4);
-export var unsignedInteger64Type = new UnsignedIntegerType(4, 8);
-export var signedInteger8Type = new SignedIntegerType(5, 1);
-export var signedInteger16Type = new SignedIntegerType(6, 2);
-export var signedInteger32Type = new SignedIntegerType(7, 4);
-export var signedInteger64Type = new SignedIntegerType(8, 8);
-export var float32Type = new FloatType(9, 4);
-export var float64Type = new FloatType(10, 8);
+export let pointerType = new PointerType();
+export let unsignedInteger8Type = new UnsignedIntegerType(1, 1);
+export let unsignedInteger16Type = new UnsignedIntegerType(2, 2);
+export let unsignedInteger32Type = new UnsignedIntegerType(3, 4);
+export let unsignedInteger64Type = new UnsignedIntegerType(4, 8);
+export let signedInteger8Type = new SignedIntegerType(5, 1);
+export let signedInteger16Type = new SignedIntegerType(6, 2);
+export let signedInteger32Type = new SignedIntegerType(7, 4);
+export let signedInteger64Type = new SignedIntegerType(8, 8);
+export let float32Type = new FloatType(9, 4);
+export let float64Type = new FloatType(10, 8);
 
 
