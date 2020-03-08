@@ -9,6 +9,7 @@ import {RuntimeError} from "objects/runtimeError";
 import {Constant} from "objects/constant";
 import {InstructionRef} from "objects/instructionRef";
 import {FunctionInvocation} from "objects/bytecodeInterpreter";
+import {Allocation} from "objects/allocation";
 
 export abstract class InstructionArg {
     
@@ -43,6 +44,14 @@ export abstract class InstructionArg {
     readBigInt(context: FunctionInvocation): bigint {
         let tempValue = this.readMixedNumber(context);
         return niceUtils.convertMixedNumberToBigInt(tempValue);
+    }
+    
+    readPointer(context: FunctionInvocation): Allocation {
+        let tempValue = this.read(context);
+        if (typeof tempValue !== "object") {
+            throw new RuntimeError("Expected pointer.");
+        }
+        return tempValue as Allocation;
     }
 }
 

@@ -19,8 +19,25 @@ instructionUtils.addInstructionEvaluator("newArgFrame", (
 ): void => {
     let alphaLength = argList[0].readInt(context);
     let betaLength = argList[1].readInt(context);
-    let allocationLength = new AllocationLength(alphaLength, betaLength);
-    context.nextArgFrame = new Allocation(allocationLength);
+    context.nextArgFrame = new Allocation(alphaLength, betaLength);
+});
+
+instructionUtils.addInstructionEvaluator("newAlloc", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let alphaLength = argList[1].readInt(context);
+    let betaLength = argList[2].readInt(context);
+    let tempAllocation = new Allocation(alphaLength, betaLength);
+    argList[0].write(context, tempAllocation);
+});
+
+instructionUtils.addInstructionEvaluator("copyAlloc", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[1].readPointer(context);
+    argList[0].write(context, tempAllocation.copy());
 });
 
 

@@ -26,7 +26,7 @@ export class FunctionInvocation {
         this.functionDefinition = functionDefinition;
         this.hasFinished = false;
         this.instructionIndex = 0;
-        this.localFrame = new Allocation(this.functionDefinition.localFrameLength);
+        this.localFrame = this.functionDefinition.localFrameLength.createAllocation();
         this.previousArgFrame = previousArgFrame;
         this.nextArgFrame = null;
     }
@@ -43,6 +43,8 @@ export class FunctionInvocation {
         let tempInstruction = tempInstructionList[this.instructionIndex];
         this.instructionIndex += 1;
         instructionUtils.evaluateInstruction(this, tempInstruction);
+        // TEST CODE.
+        console.log(this.localFrame);
     }
 }
 
@@ -60,7 +62,7 @@ export class BytecodeInterpreter {
         if (!tempResult) {
             throw new RuntimeError("Could not resolve all required dependency paths.");
         }
-        this.globalFrame = new Allocation(this.bytecodeApp.globalFrameLength);
+        this.globalFrame = this.bytecodeApp.globalFrameLength.createAllocation();
         this.callStack = [];
         let tempFunctionDefinition = this.bytecodeApp.initFunctionDefinition;
         if (tempFunctionDefinition !== null) {

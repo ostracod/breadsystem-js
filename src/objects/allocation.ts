@@ -12,6 +12,10 @@ export class AllocationLength {
         this.alphaLength = alphaLength;
         this.betaLength = betaLength;
     }
+    
+    createAllocation(): Allocation {
+        return new Allocation(this.alphaLength, this.betaLength);
+    }
 }
 
 export class Allocation {
@@ -19,12 +23,12 @@ export class Allocation {
     alphaRegion: Allocation[];
     betaRegion: Buffer;
     
-    constructor(allocationLength: AllocationLength) {
+    constructor(alphaLength: number, betaLength: number) {
         this.alphaRegion = [];
-        while (this.alphaRegion.length < allocationLength.alphaLength) {
+        while (this.alphaRegion.length < alphaLength) {
             this.alphaRegion.push(null);
         }
-        this.betaRegion = Buffer.alloc(allocationLength.betaLength);
+        this.betaRegion = Buffer.alloc(betaLength);
     }
     
     checkAlphaIndex(index: number): void {
@@ -69,6 +73,15 @@ export class Allocation {
         } else {
             throw new RuntimeError("Invalid instruction value data type.");
         }
+    }
+    
+    copy(): Allocation {
+        let output = new Allocation(this.alphaRegion.length, this.betaRegion.length);
+        for (let index = 0; index < this.alphaRegion.length; index++) {
+            output.alphaRegion[index] = this.alphaRegion[index];
+        }
+        this.betaRegion.copy(output.betaRegion);
+        return output;
     }
 }
 
