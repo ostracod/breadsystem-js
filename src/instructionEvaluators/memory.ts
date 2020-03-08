@@ -1,7 +1,7 @@
 
 import {instructionUtils} from "utils/instructionUtils";
 
-import {AllocationLength, Allocation} from "objects/allocation";
+import {AllocationLength, Allocation, HeapAllocation} from "objects/allocation";
 import {FunctionInvocation} from "objects/bytecodeInterpreter";
 import {InstructionArg} from "objects/instruction";
 
@@ -28,7 +28,8 @@ instructionUtils.addInstructionEvaluator("newAlloc", (
 ): void => {
     let alphaLength = argList[1].readInt(context);
     let betaLength = argList[2].readInt(context);
-    let tempAllocation = new Allocation(alphaLength, betaLength);
+    let tempCreator = context.bytecodeInterpreter.agent;
+    let tempAllocation = new HeapAllocation(alphaLength, betaLength, tempCreator);
     argList[0].write(context, tempAllocation);
 });
 
@@ -72,6 +73,31 @@ instructionUtils.addInstructionEvaluator("setAllocBLen", (
     let tempAllocation = argList[0].readPointer(context);
     let tempLength = argList[1].readInt(context);
     tempAllocation.setBetaLength(tempLength);
+});
+
+instructionUtils.addInstructionEvaluator("allocCreator", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[1].readPointer(context);
+    argList[0].write(context, tempAllocation.creator.sentry);
+});
+
+instructionUtils.addInstructionEvaluator("allocSType", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[1].readPointer(context);
+    argList[0].write(context, tempAllocation.sentryType);
+});
+
+instructionUtils.addInstructionEvaluator("setAllocSType", (
+    context: FunctionInvocation,
+    argList: InstructionArg[]
+): void => {
+    let tempAllocation = argList[0].readPointer(context);
+    let sentryType = argList[1].readInt(context);
+    tempAllocation.sentryType = sentryType;
 });
 
 

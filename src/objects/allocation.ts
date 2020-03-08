@@ -1,7 +1,21 @@
 
 import {MixedNumber, InstructionValue} from "models/items";
+
 import {DataType, PointerType, BetaType, NumberType} from "delegates/dataType";
+
 import {RuntimeError} from "objects/runtimeError";
+import {Agent} from "objects/agent";
+
+const SENTRY_TYPE = {
+    funcHandle: 0x0001,
+    thread: 0x0002,
+    launchOpt: 0x0003,
+    agent: 0x0004,
+    mutex: 0x0005,
+    fileHandle: 0x0006,
+    protab: 0x0007,
+    perm: 0x0008,
+}
 
 export class AllocationLength {
     
@@ -20,7 +34,7 @@ export class AllocationLength {
 
 export class Allocation {
     
-    alphaRegion: Allocation[];
+    alphaRegion: HeapAllocation[];
     betaRegion: Buffer;
     
     constructor(alphaLength: number, betaLength: number) {
@@ -62,7 +76,7 @@ export class Allocation {
             if (typeof value !== "object") {
                 throw new RuntimeError("Cannot write number to alpha region.");
             }
-            this.alphaRegion[index] = value as Allocation;
+            this.alphaRegion[index] = value as HeapAllocation;
         } else if (dataType instanceof NumberType) {
             let tempNumberType = dataType as NumberType;
             this.checkBetaIndex(index, tempNumberType);
@@ -74,9 +88,31 @@ export class Allocation {
             throw new RuntimeError("Invalid instruction value data type.");
         }
     }
+}
+
+export class HeapAllocation extends Allocation {
     
-    copy(): Allocation {
-        let output = new Allocation(this.alphaRegion.length, this.betaRegion.length);
+    creator: Agent;
+    sentryType: number;
+    
+    constructor(
+        alphaLength: number,
+        betaLength: number,
+        creator: Agent,
+        sentryType: number = 0
+    ) {
+        super(alphaLength, betaLength);
+        this.creator = creator;
+        this.sentryType = sentryType;
+    }
+    
+    copy(): HeapAllocation {
+        let output = new HeapAllocation(
+            this.alphaRegion.length,
+            this.betaRegion.length,
+            this.creator,
+            this.sentryType
+        );
         for (let index = 0; index < this.alphaRegion.length; index++) {
             output.alphaRegion[index] = this.alphaRegion[index];
         }
@@ -102,6 +138,16 @@ export class Allocation {
             this.betaRegion.copy(tempBetaRegion);
         }
         this.betaRegion = tempBetaRegion;
+    }
+}
+
+export class AgentSentry extends HeapAllocation {
+    
+    agent: Agent;
+    
+    constructor(agent: Agent) {
+        super(0, 0, null, SENTRY_TYPE.agent);
+        this.agent = agent;
     }
 }
 

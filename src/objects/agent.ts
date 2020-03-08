@@ -1,14 +1,17 @@
 
 import {BytecodeInterpreter} from "objects/bytecodeInterpreter";
+import {AgentSentry} from "objects/allocation";
 
 export let runningAgentList = [];
 
 export abstract class Agent {
     
     appPath: string;
+    sentry: AgentSentry;
     
     constructor(absoluteAppPath: string) {
         this.appPath = absoluteAppPath;
+        this.sentry = new AgentSentry(this);
         runningAgentList.push(this);
     }
     
