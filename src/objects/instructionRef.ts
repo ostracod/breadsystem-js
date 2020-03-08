@@ -73,7 +73,7 @@ class PrevArgFrameInstructionRef extends SimpleInstructionRef {
     }
     
     getAllocation(context: FunctionInvocation): Allocation {
-        throw new RuntimeError("Previous arg frame reference is not yet implemented.");
+        return context.previousArgFrame;
     }
 }
 
@@ -84,7 +84,7 @@ class NextArgFrameInstructionRef extends SimpleInstructionRef {
     }
     
     getAllocation(context: FunctionInvocation): Allocation {
-        throw new RuntimeError("Next arg frame reference is not yet implemented.");
+        return context.nextArgFrame;
     }
 }
 
@@ -95,7 +95,11 @@ class AppDataInstructionRef extends SimpleInstructionRef {
     }
     
     getAllocation(context: FunctionInvocation): Allocation {
-        throw new RuntimeError("App data reference is not yet implemented.");
+        return context.bytecodeInterpreter.bytecodeApp.appData;
+    }
+    
+    write(context: FunctionInvocation, index: number, dataType: DataType, value: InstructionValue): void {
+        throw new RuntimeError("Cannot write to app data region.");
     }
 }
 

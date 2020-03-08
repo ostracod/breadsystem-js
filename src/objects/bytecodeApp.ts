@@ -5,9 +5,9 @@ import {parseUtils} from "utils/parseUtils";
 
 import {RuntimeError} from "objects/runtimeError";
 import {FileHandle} from "objects/fileHandle";
-import {AllocationLength} from "objects/allocation";
+import {AllocationLength, Allocation} from "objects/allocation";
 import {FunctionDefinition, PublicFunctionDefinition} from "objects/functionDefinition";
-import {REGION_TYPE, CompositeFileRegion} from "objects/fileRegion";
+import {REGION_TYPE, AtomicFileRegion, CompositeFileRegion} from "objects/fileRegion";
 import {DependencyDefinition} from "objects/dependencyDefinition";
 
 export class BytecodeApp {
@@ -18,6 +18,7 @@ export class BytecodeApp {
     initFunctionDefinition: PublicFunctionDefinition;
     globalFrameLength: AllocationLength;
     dependencyDefinitionList: DependencyDefinition[];
+    appData: Allocation;
     
     constructor(absolutePath: string) {
         this.absolutePath = absolutePath;
@@ -53,11 +54,21 @@ export class BytecodeApp {
             let tempDependencyDefinition = this.dependencyDefinitionList[index];
             tempDependencyDefinition.index = index;
         }
-        // TODO: Consume more regions.
+        let tempAtomicRegion = this.fileRegion.getRegionOrNullByType(
+            REGION_TYPE.appData
+        ) as AtomicFileRegion;
+        if (tempAtomicRegion === null) {
+            this.appData = new Allocation(0, 0);
+        } else {
+            let tempBuffer = tempAtomicRegion.contentBuffer;
+            this.appData = new Allocation(0, tempBuffer.length);
+            tempBuffer.copy(this.appData.betaRegion);
+        }
         console.log(this.functionDefinitionList);
         console.log(this.globalFrameLength);
         console.log(this.dependencyDefinitionList);
-        
+        console.log(this.appData);
+        console.log("==================");
     }
     
     getImplementedDependencyDefinition(absolutePath: string): DependencyDefinition {
