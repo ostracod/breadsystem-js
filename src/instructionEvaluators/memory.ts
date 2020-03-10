@@ -38,7 +38,7 @@ instructionUtils.addInstructionEvaluator("copyAlloc", (
     argList: InstructionArg[]
 ): void => {
     let tempAllocation = argList[1].readPointer(context);
-    argList[0].write(context, tempAllocation.copy());
+    argList[0].write(context, tempAllocation.copyHeapAllocation());
 });
 
 instructionUtils.addInstructionEvaluator("allocALen", (

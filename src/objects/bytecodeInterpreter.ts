@@ -9,7 +9,9 @@ import {FunctionDefinition} from "objects/functionDefinition";
 
 export class FunctionInvocation {
     
+    thread: Thread;
     bytecodeInterpreter: BytecodeInterpreter;
+    bytecodeApp: BytecodeApp;
     functionDefinition: FunctionDefinition;
     hasFinished: boolean;
     instructionIndex: number;
@@ -18,11 +20,13 @@ export class FunctionInvocation {
     nextArgFrame: Allocation;
     
     constructor(
-        bytecodeInterpreter: BytecodeInterpreter,
+        thread: Thread,
         functionDefinition: FunctionDefinition,
         previousArgFrame: Allocation
     ) {
-        this.bytecodeInterpreter = bytecodeInterpreter;
+        this.thread = thread;
+        this.bytecodeInterpreter = this.thread.bytecodeInterpreter;
+        this.bytecodeApp = this.bytecodeInterpreter.bytecodeApp;
         this.functionDefinition = functionDefinition;
         this.hasFinished = false;
         this.instructionIndex = 0;
@@ -48,29 +52,19 @@ export class FunctionInvocation {
     }
 }
 
-export class BytecodeInterpreter {
+export class Thread {
     
-    agent: Agent;
-    bytecodeApp: BytecodeApp;
-    globalFrame: Allocation;
+    bytecodeInterpreter: BytecodeInterpreter;
     callStack: FunctionInvocation[];
+    hasFinished: boolean;
     
-    constructor(agent: Agent) {
-        this.agent = agent;
-        this.bytecodeApp = new BytecodeApp(this.agent.appPath);
-        let tempResult = this.bytecodeApp.resolveDependencyPaths();
-        if (!tempResult) {
-            throw new RuntimeError("Could not resolve all required dependency paths.");
-        }
-        this.globalFrame = this.bytecodeApp.globalFrameLength.createAllocation();
+    constructor(bytecodeInterpreter: BytecodeInterpreter) {
+        this.bytecodeInterpreter = bytecodeInterpreter;
         this.callStack = [];
-        let tempFunctionDefinition = this.bytecodeApp.initFunctionDefinition;
-        if (tempFunctionDefinition !== null) {
-            this.invokeFunction(tempFunctionDefinition);
-        }
+        this.hasFinished = false;
     }
     
-    invokeFunction(functionDefinition: FunctionDefinition, previousArgFrame: Allocation = null) {
+    invokeFunction(functionDefinition: FunctionDefinition, previousArgFrame: Allocation = null): void {
         let tempInvocation = new FunctionInvocation(
             this,
             functionDefinition,
@@ -81,12 +75,52 @@ export class BytecodeInterpreter {
     
     evaluateNextInstruction(): void {
         if (this.callStack.length <= 0) {
+            this.hasFinished = true;
             return;
         }
         let tempInvocation = this.callStack[this.callStack.length - 1];
         tempInvocation.evaluateNextInstruction();
         if (tempInvocation.hasFinished) {
             this.callStack.pop();
+        }
+    }
+}
+
+export class BytecodeInterpreter {
+    
+    agent: Agent;
+    bytecodeApp: BytecodeApp;
+    globalFrame: Allocation;
+    threadList: Thread[];
+    
+    constructor(agent: Agent) {
+        this.agent = agent;
+        this.bytecodeApp = new BytecodeApp(this.agent.appPath);
+        let tempResult = this.bytecodeApp.resolveDependencyPaths();
+        if (!tempResult) {
+            throw new RuntimeError("Could not resolve all required dependency paths.");
+        }
+        this.globalFrame = this.bytecodeApp.globalFrameLength.createAllocation();
+        this.threadList = [];
+        let tempFunctionDefinition = this.bytecodeApp.initFunctionDefinition;
+        if (tempFunctionDefinition !== null) {
+            this.invokeFunction(tempFunctionDefinition);
+        }
+    }
+    
+    invokeFunction(functionDefinition: FunctionDefinition, previousArgFrame: Allocation = null): void {
+        let tempThread = new Thread(this);
+        tempThread.invokeFunction(functionDefinition, previousArgFrame);
+        this.threadList.push(tempThread);
+    }
+    
+    timerEvent(): void {
+        for (let index = this.threadList.length - 1; index >= 0; index--) {
+            let tempThread = this.threadList[index];
+            tempThread.evaluateNextInstruction();
+            if (tempThread.hasFinished) {
+                this.threadList.splice(index, 1);
+            }
         }
     }
 }

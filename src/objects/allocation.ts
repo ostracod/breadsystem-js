@@ -45,6 +45,23 @@ export class Allocation {
         this.betaRegion = Buffer.alloc(betaLength);
     }
     
+    writeAllocation(allocation: Allocation): void {
+        if (allocation.alphaRegion.length !== this.alphaRegion.length
+                || allocation.betaRegion.length !== this.betaRegion.length) {
+            throw new RuntimeError("Allocation size mismatch.");
+        }
+        for (let index = 0; index < allocation.alphaRegion.length; index++) {
+            this.alphaRegion[index] = allocation.alphaRegion[index];
+        }
+        allocation.betaRegion.copy(this.betaRegion);
+    }
+    
+    copyAllocation(): Allocation {
+        let output = new Allocation(this.alphaRegion.length, this.betaRegion.length);
+        output.writeAllocation(this);
+        return output;
+    }
+    
     checkAlphaIndex(index: number): void {
         if (index < 0 || index >= this.alphaRegion.length) {
             throw new RuntimeError("Invalid alpha region index.");
@@ -106,17 +123,14 @@ export class HeapAllocation extends Allocation {
         this.sentryType = sentryType;
     }
     
-    copy(): HeapAllocation {
+    copyHeapAllocation(): HeapAllocation {
         let output = new HeapAllocation(
             this.alphaRegion.length,
             this.betaRegion.length,
             this.creator,
             this.sentryType
         );
-        for (let index = 0; index < this.alphaRegion.length; index++) {
-            output.alphaRegion[index] = this.alphaRegion[index];
-        }
-        this.betaRegion.copy(output.betaRegion);
+        output.writeAllocation(this);
         return output;
     }
     

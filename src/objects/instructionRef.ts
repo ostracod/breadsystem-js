@@ -95,7 +95,7 @@ class AppDataInstructionRef extends SimpleInstructionRef {
     }
     
     getAllocation(context: FunctionInvocation): Allocation {
-        return context.bytecodeInterpreter.bytecodeApp.appData;
+        return context.bytecodeApp.appData;
     }
     
     write(context: FunctionInvocation, index: number, dataType: DataType, value: InstructionValue): void {
