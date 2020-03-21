@@ -7,15 +7,16 @@ import {RuntimeError} from "objects/runtimeError";
 import {Agent} from "objects/agent";
 
 const SENTRY_TYPE = {
-    funcHandle: 0x0001,
-    thread: 0x0002,
-    launchOpt: 0x0003,
-    agent: 0x0004,
-    mutex: 0x0005,
-    fileHandle: 0x0006,
-    protab: 0x0007,
-    perm: 0x0008,
-}
+    err: 0x0001,
+    funcHandle: 0x0002,
+    thread: 0x0003,
+    launchOpt: 0x0004,
+    agent: 0x0005,
+    mutex: 0x0006,
+    fileHandle: 0x0007,
+    protab: 0x0008,
+    perm: 0x0009
+};
 
 export class AllocationLength {
     
